@@ -1,14 +1,10 @@
 package com.xxl.job.core.glue;
 
+import com.xxl.job.core.glue.impl.GroovyGlueAdapter;
 import com.xxl.job.core.glue.impl.SpringGlueFactory;
 import com.xxl.job.core.handler.IJobHandler;
 import com.xxl.tool.core.StringTool;
-import groovy.lang.GroovyClassLoader;
 
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * glue factory, product class/object by name
@@ -19,6 +15,14 @@ public class GlueFactory {
 
 
 	private static GlueFactory glueFactory = new GlueFactory();
+
+	protected GlueFactory(){
+		if (isClassPresent("groovy.lang.GroovyClassLoader")) {
+			groovyGlueAdapter = new GroovyGlueAdapter();
+		}
+	}
+
+
 	public static GlueFactory getInstance(){
 		return glueFactory;
 	}
@@ -40,9 +44,7 @@ public class GlueFactory {
 	/**
 	 * groovy class loader
 	 */
-	private final GroovyClassLoader groovyClassLoader = new GroovyClassLoader();
-	private final ConcurrentMap<String, Class<?>> CLASS_CACHE = new ConcurrentHashMap<>();
-
+	private static GroovyGlueAdapter groovyGlueAdapter = null;
 	/**
 	 * load new instance, prototype
 	 *
@@ -50,8 +52,8 @@ public class GlueFactory {
 	 * @return IJobHandler
 	 */
 	public IJobHandler loadNewInstance(String codeSource) throws Exception{
-		if (StringTool.isNotBlank(codeSource)) {
-			Class<?> clazz = getCodeSourceClass(codeSource);
+		if (StringTool.isNotBlank(codeSource)&&groovyGlueAdapter!=null) {
+			Class<?> clazz = groovyGlueAdapter.getCodeSourceClass(codeSource);
 			if (clazz != null) {
 				Object instance = clazz.newInstance();
                 if (instance instanceof IJobHandler) {
@@ -65,22 +67,6 @@ public class GlueFactory {
 		}
 		throw new IllegalArgumentException(">>>>>>>>>>> xxl-glue, loadNewInstance error, instance is null");
 	}
-	private Class<?> getCodeSourceClass(String codeSource){
-		try {
-			// md5
-			byte[] md5 = MessageDigest.getInstance("MD5").digest(codeSource.getBytes());
-			String md5Str = new BigInteger(1, md5).toString(16);
-
-			Class<?> clazz = CLASS_CACHE.get(md5Str);
-			if(clazz == null){
-				clazz = groovyClassLoader.parseClass(codeSource);
-				CLASS_CACHE.putIfAbsent(md5Str, clazz);
-			}
-			return clazz;
-		} catch (Exception e) {
-			return groovyClassLoader.parseClass(codeSource);
-		}
-	}
 
 	/**
 	 * inject service of bean field
@@ -89,6 +75,15 @@ public class GlueFactory {
 	 */
 	public void injectService(Object instance) {
 		// do something
+	}
+
+	private boolean isClassPresent(String className){
+		try {
+			Class.forName(className, false, Thread.currentThread().getContextClassLoader());
+			return true;
+		}catch (Exception e){
+			return false;
+		}
 	}
 
 }
