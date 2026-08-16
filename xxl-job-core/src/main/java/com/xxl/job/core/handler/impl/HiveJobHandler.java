@@ -74,10 +74,9 @@ public class HiveJobHandler extends IJobHandler {
         String user = resolveConfig(CONFIG_HIVE_USER, ENV_HIVE_USER, "");
         String password = resolveConfig(CONFIG_HIVE_PASSWORD, ENV_HIVE_PASSWORD, "");
 
-        File beelineFile = new File(beeline);
-        if (beelineFile.isAbsolute() && !beelineFile.isFile()) {
-            XxlJobHelper.log("----------- beeline not found, please check xxl.job.hive.home / HIVE_HOME config. beeline:" + beeline + " -----------");
-            XxlJobHelper.handleFail("hive beeline not found, beeline:" + beeline);
+        if (!resolveBeelineExecutable(beeline)) {
+            XxlJobHelper.log("----------- beeline not found, please check xxl.job.hive.home / HIVE_HOME / PATH config. beeline:" + beeline + " -----------");
+            XxlJobHelper.handleFail("hive beeline not found, please check xxl.job.hive.home / HIVE_HOME / PATH config. beeline:" + beeline);
             return;
         }
 
@@ -152,6 +151,31 @@ public class HiveJobHandler extends IJobHandler {
             return envHiveHome + File.separator + "bin" + File.separator + "beeline";
         }
         return "beeline";
+    }
+
+    /**
+     * 校验 beeline 是否可执行：
+     * 1、绝对路径：文件存在即可；
+     * 2、相对路径（PATH 查找）：PATH 中存在可执行的 beeline 文件。
+     */
+    private static boolean resolveBeelineExecutable(String beeline) {
+        File beelineFile = new File(beeline);
+        if (beelineFile.isAbsolute()) {
+            return beelineFile.isFile() && beelineFile.canExecute();
+        }
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv != null) {
+            for (String pathItem : pathEnv.split(File.pathSeparator)) {
+                if (pathItem == null || pathItem.trim().isEmpty()) {
+                    continue;
+                }
+                File candidate = new File(pathItem, beeline);
+                if (candidate.isFile() && candidate.canExecute()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
