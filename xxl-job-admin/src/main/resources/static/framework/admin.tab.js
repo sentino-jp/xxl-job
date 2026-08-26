@@ -109,6 +109,41 @@
 
     // -------------------- tab：open default --------------------
 
+    function isSafeTabSrc(tabSrc) {
+        if (tabSrc === undefined || tabSrc === null) {
+            return false;
+        }
+        var src = $.trim(String(tabSrc));
+        if (src.length === 0) {
+            return false;
+        }
+        var compact = src.replace(/[\u0000-\u0020\u007f]+/g, '');
+        if (/^(?:javascript|data|vbscript|file|blob)\s*:/i.test(compact)) {
+            return false;
+        }
+        if (/^\/\//.test(compact)) {
+            return false;
+        }
+        return true;
+    }
+
+    function isSafeHashTabSrc(tabSrc) {
+        if (!isSafeTabSrc(tabSrc)) {
+            return false;
+        }
+        var src = $.trim(String(tabSrc));
+        if (src.charAt(0) !== '/' || src.charAt(1) === '/') {
+            return false;
+        }
+        if (/[<>"'`]/.test(src)) {
+            return false;
+        }
+        if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(src)) {
+            return false;
+        }
+        return true;
+    }
+
     /**
      * 默认打开菜单Tab：初始化首页菜单，然后 尝试打开url路径TAB
      */
@@ -130,14 +165,25 @@
             return;
         }
         setTimeout(function (){
-            var $menuItem = $('.J_menuItem').filter('a[href$="' + decodeURI(tabSrc) + '"]');
+            var decoded;
+            try {
+                decoded = decodeURI(tabSrc);
+            } catch (e) {
+                return;
+            }
+            var $menuItem = $('.J_menuItem').filter(function () {
+                var href = $(this).attr('href') || '';
+                return href === decoded || (decoded.length > 0 && href.slice(-decoded.length) === decoded);
+            });
             if ($menuItem.length > 0) {
                 // URL匹配到菜单，初始化
                 $menuItem.click();
                 return;
             } else {
                 // 匹配失败，兜底直接打开
-                openTab(tabSrc, tabSrc);
+                if (isSafeHashTabSrc(tabSrc)) {
+                    openTab(tabSrc, tabSrc);
+                }
             }
         }, 100)
 
@@ -155,6 +201,9 @@
     function openTab(tabSrc, tabName) {
         // 0、valid dateurl
         if (tabSrc === undefined || $.trim(tabSrc).length === 0){
+            return false;
+        }
+        if (!isSafeTabSrc(tabSrc)) {
             return false;
         }
         if (tabName === undefined || $.trim(tabName).length === 0){
@@ -193,17 +242,23 @@
         // 3、Tab不存在，初始化新Tab + IFrame
         // build Tab (other tab no-active)
         $('.J_menuTab').removeClass('active');
-        var tabStr = '<a href="javascript:;" class="active J_menuTab" data-id="' + tabSrc + '" title="'+ tabName +'" >' + tabNameShow + ' <i class="fa fa-times-circle"></i></a>';
+        var $tab = $('<a href="javascript:;" class="active J_menuTab"></a>');
+        $tab.attr('data-id', tabSrc);
+        $tab.attr('title', tabName);
+        $tab.text(tabNameShow + ' ');
+        $tab.append($('<i class="fa fa-times-circle"></i>'));
 
         // build IFrame (other ifame hide)
-        var iframeStr = '<iframe class="J_iframe" width="100%" height="100%" src="' + tabSrc + '" frameborder="0" data-id="' + tabSrc + '" seamless></iframe>';
+        var $iframe = $('<iframe class="J_iframe" width="100%" height="100%" frameborder="0" seamless="seamless"></iframe>');
+        $iframe.attr('data-id', tabSrc);
+        $iframe.attr('src', tabSrc);
 
         // 4、添加Tab + IFrame
         // append iframe
         $('.J_mainContent').find('iframe.J_iframe').hide();
-        $('.J_mainContent').append(iframeStr);
+        $('.J_mainContent').append($iframe);
         // append tab
-        $('.J_menuTabs .page-tabs-content').append(tabStr);
+        $('.J_menuTabs .page-tabs-content').append($tab);
 
         // 添加遮罩层
         NProgress.inc(0.2);
@@ -215,7 +270,6 @@
         NProgress.start();
 
         // load iframe
-        let $iframe = $('.J_mainContent iframe:visible');
         $iframe.on('load', function () {
             NProgress.done();
         }).on('error', function () {
