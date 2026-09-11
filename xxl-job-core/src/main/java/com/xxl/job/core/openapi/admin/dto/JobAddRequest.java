@@ -16,6 +16,7 @@ public class JobAddRequest implements Serializable {
 
     private String scheduleType;                    // NONE、CRON、FIX_RATE
     private String scheduleConf;
+    private String scheduleTimezone;                // timezone id such as Asia/Tokyo, only for CRON; blank means admin default timezone
     private String misfireStrategy;                 // DO_NOTHING、FIRE_ONCE_NOW
 
     private String executorRouteStrategy;           // FIRST、LAST、ROUND、RANDOM、CONSISTENT_HASH、LEAST_FREQUENTLY_USED、LEAST_RECENTLY_USED、FAILOVER、BUSYOVER、SHARDING_BROADCAST
@@ -24,10 +25,6 @@ public class JobAddRequest implements Serializable {
     private String executorBlockStrategy;           // SERIAL_EXECUTION、DISCARD_LATER、COVER_EARLY
     private int executorTimeout;
     private int executorFailRetryCount;
-
-    private String glueType;                        // BEAN、GLUE_GROOVY、GLUE_SHELL、GLUE_PYTHON、GLUE_NODEJS、GLUE_POWERSHELL、GLUE_PHP
-    private String glueSource;
-    private String glueRemark;
 
     public JobAddRequest() {
     }
@@ -78,6 +75,14 @@ public class JobAddRequest implements Serializable {
 
     public void setScheduleConf(String scheduleConf) {
         this.scheduleConf = scheduleConf;
+    }
+
+    public String getScheduleTimezone() {
+        return scheduleTimezone;
+    }
+
+    public void setScheduleTimezone(String scheduleTimezone) {
+        this.scheduleTimezone = scheduleTimezone;
     }
 
     public String getMisfireStrategy() {
@@ -134,30 +139,6 @@ public class JobAddRequest implements Serializable {
 
     public void setExecutorFailRetryCount(int executorFailRetryCount) {
         this.executorFailRetryCount = executorFailRetryCount;
-    }
-
-    public String getGlueType() {
-        return glueType;
-    }
-
-    public void setGlueType(String glueType) {
-        this.glueType = glueType;
-    }
-
-    public String getGlueSource() {
-        return glueSource;
-    }
-
-    public void setGlueSource(String glueSource) {
-        this.glueSource = glueSource;
-    }
-
-    public String getGlueRemark() {
-        return glueRemark;
-    }
-
-    public void setGlueRemark(String glueRemark) {
-        this.glueRemark = glueRemark;
     }
 
 }

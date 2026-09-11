@@ -16,6 +16,7 @@ public class JobUpdateRequest implements Serializable {
 
     private String scheduleType;
     private String scheduleConf;
+    private String scheduleTimezone;                // timezone id such as Asia/Tokyo, only for CRON; blank means admin default timezone
     private String misfireStrategy;
 
     private String executorRouteStrategy;
@@ -24,10 +25,6 @@ public class JobUpdateRequest implements Serializable {
     private String executorBlockStrategy;
     private int executorTimeout;
     private int executorFailRetryCount;
-
-    private String glueType;
-    private String glueSource;
-    private String glueRemark;
 
     public JobUpdateRequest() {
     }
@@ -78,6 +75,14 @@ public class JobUpdateRequest implements Serializable {
 
     public void setScheduleConf(String scheduleConf) {
         this.scheduleConf = scheduleConf;
+    }
+
+    public String getScheduleTimezone() {
+        return scheduleTimezone;
+    }
+
+    public void setScheduleTimezone(String scheduleTimezone) {
+        this.scheduleTimezone = scheduleTimezone;
     }
 
     public String getMisfireStrategy() {
@@ -134,30 +139,6 @@ public class JobUpdateRequest implements Serializable {
 
     public void setExecutorFailRetryCount(int executorFailRetryCount) {
         this.executorFailRetryCount = executorFailRetryCount;
-    }
-
-    public String getGlueType() {
-        return glueType;
-    }
-
-    public void setGlueType(String glueType) {
-        this.glueType = glueType;
-    }
-
-    public String getGlueSource() {
-        return glueSource;
-    }
-
-    public void setGlueSource(String glueSource) {
-        this.glueSource = glueSource;
-    }
-
-    public String getGlueRemark() {
-        return glueRemark;
-    }
-
-    public void setGlueRemark(String glueRemark) {
-        this.glueRemark = glueRemark;
     }
 
 }

@@ -23,14 +23,4 @@ public class XxlJobFileAppenderTest {
                 "callbacklogs should be located below the user-specified directory");
     }
 
-    @Test
-    void gluesource_test(@TempDir Path tempDir) throws IOException {
-        String customLogPath = tempDir.toFile().getPath();
-
-        XxlJobFileAppender.initLogPath(customLogPath);
-
-        File expectedGlueDir = new File(customLogPath, "gluesource");
-        assertEquals(expectedGlueDir.getPath(), XxlJobFileAppender.getGlueSrcPath(),
-                "gluesource should be located below the user-specified directory");
-    }
 }

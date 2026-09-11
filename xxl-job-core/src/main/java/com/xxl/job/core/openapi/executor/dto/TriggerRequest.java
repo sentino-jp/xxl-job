@@ -21,11 +21,6 @@ public class TriggerRequest implements Serializable{
     private long logId;
     private long logDateTime;
 
-    // glue info
-    private String glueType;
-    private String glueSource;
-    private long glueUpdatetime;
-
     // broadcast info
     private int broadcastIndex;
     private int broadcastTotal;
@@ -87,30 +82,6 @@ public class TriggerRequest implements Serializable{
         this.logDateTime = logDateTime;
     }
 
-    public String getGlueType() {
-        return glueType;
-    }
-
-    public void setGlueType(String glueType) {
-        this.glueType = glueType;
-    }
-
-    public String getGlueSource() {
-        return glueSource;
-    }
-
-    public void setGlueSource(String glueSource) {
-        this.glueSource = glueSource;
-    }
-
-    public long getGlueUpdatetime() {
-        return glueUpdatetime;
-    }
-
-    public void setGlueUpdatetime(long glueUpdatetime) {
-        this.glueUpdatetime = glueUpdatetime;
-    }
-
     public int getBroadcastIndex() {
         return broadcastIndex;
     }
@@ -138,9 +109,6 @@ public class TriggerRequest implements Serializable{
                 ", executorTimeout=" + executorTimeout +
                 ", logId=" + logId +
                 ", logDateTime=" + logDateTime +
-                ", glueType='" + glueType + '\'' +
-                ", glueSource='" + glueSource + '\'' +
-                ", glueUpdatetime=" + glueUpdatetime +
                 ", broadcastIndex=" + broadcastIndex +
                 ", broadcastTotal=" + broadcastTotal +
                 '}';

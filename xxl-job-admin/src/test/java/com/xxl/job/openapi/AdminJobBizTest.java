@@ -56,7 +56,6 @@ public class AdminJobBizTest {
         request.setExecutorBlockStrategy("SERIAL_EXECUTION");
         request.setExecutorTimeout(0);
         request.setExecutorFailRetryCount(0);
-        request.setGlueType("BEAN");
 
         Response<String> returnT = adminJobBiz.addJob(request);
         assertTrue(returnT.isSuccess());
@@ -82,7 +81,6 @@ public class AdminJobBizTest {
         request.setExecutorBlockStrategy("SERIAL_EXECUTION");
         request.setExecutorTimeout(0);
         request.setExecutorFailRetryCount(0);
-        request.setGlueType("BEAN");
 
         Response<String> returnT = adminJobBiz.updateJob(request);
         logger.info("updateJob response: {}", returnT);

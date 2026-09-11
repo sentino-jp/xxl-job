@@ -61,6 +61,7 @@ public class AdminJobBizImpl implements AdminJobBiz {
         jobInfo.setAlarmEmail(request.getAlarmEmail());
         jobInfo.setScheduleType(request.getScheduleType());
         jobInfo.setScheduleConf(request.getScheduleConf());
+        jobInfo.setScheduleTimezone(request.getScheduleTimezone());
         jobInfo.setMisfireStrategy(request.getMisfireStrategy());
         jobInfo.setExecutorRouteStrategy(request.getExecutorRouteStrategy());
         jobInfo.setExecutorHandler(request.getExecutorHandler());
@@ -68,9 +69,6 @@ public class AdminJobBizImpl implements AdminJobBiz {
         jobInfo.setExecutorBlockStrategy(request.getExecutorBlockStrategy());
         jobInfo.setExecutorTimeout(request.getExecutorTimeout());
         jobInfo.setExecutorFailRetryCount(request.getExecutorFailRetryCount());
-        jobInfo.setGlueType(request.getGlueType());
-        jobInfo.setGlueSource(request.getGlueSource());
-        jobInfo.setGlueRemark(request.getGlueRemark());
         jobInfo.setChildJobId(null);
 
         // add job
@@ -94,6 +92,7 @@ public class AdminJobBizImpl implements AdminJobBiz {
         jobInfo.setAlarmEmail(request.getAlarmEmail());
         jobInfo.setScheduleType(request.getScheduleType());
         jobInfo.setScheduleConf(request.getScheduleConf());
+        jobInfo.setScheduleTimezone(request.getScheduleTimezone());
         jobInfo.setMisfireStrategy(request.getMisfireStrategy());
         jobInfo.setExecutorRouteStrategy(request.getExecutorRouteStrategy());
         jobInfo.setExecutorHandler(request.getExecutorHandler());
@@ -101,9 +100,6 @@ public class AdminJobBizImpl implements AdminJobBiz {
         jobInfo.setExecutorBlockStrategy(request.getExecutorBlockStrategy());
         jobInfo.setExecutorTimeout(request.getExecutorTimeout());
         jobInfo.setExecutorFailRetryCount(request.getExecutorFailRetryCount());
-        jobInfo.setGlueType(request.getGlueType());
-        jobInfo.setGlueSource(request.getGlueSource());
-        jobInfo.setGlueRemark(request.getGlueRemark());
         jobInfo.setChildJobId(null);
 
         // update job

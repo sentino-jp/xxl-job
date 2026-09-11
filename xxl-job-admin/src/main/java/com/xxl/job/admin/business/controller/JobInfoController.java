@@ -11,7 +11,6 @@ import com.xxl.job.admin.business.service.XxlJobService;
 import com.xxl.job.admin.framework.util.I18nUtil;
 import com.xxl.job.admin.framework.util.JobGroupPermissionUtil;
 import com.xxl.job.core.constant.ExecutorBlockStrategyEnum;
-import com.xxl.job.core.glue.GlueTypeEnum;
 import com.xxl.sso.core.helper.XxlSsoHelper;
 import com.xxl.sso.core.model.LoginInfo;
 import com.xxl.tool.core.CollectionTool;
@@ -29,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,10 +52,11 @@ public class JobInfoController {
 
 		// 枚举-字典
 		model.addAttribute("ExecutorRouteStrategyEnum", ExecutorRouteStrategyEnum.values());	    // 路由策略-列表
-		model.addAttribute("GlueTypeEnum", GlueTypeEnum.values());								// Glue类型-字典
 		model.addAttribute("ExecutorBlockStrategyEnum", ExecutorBlockStrategyEnum.values());	    // 阻塞处理策略-字典
 		model.addAttribute("ScheduleTypeEnum", ScheduleTypeEnum.values());	    				// 调度类型
 		model.addAttribute("MisfireStrategyEnum", MisfireStrategyEnum.values());	    			// 调度过期策略
+		model.addAttribute("TimezoneList", ZoneId.getAvailableZoneIds().stream().sorted().toList());	// 可选时区
+		model.addAttribute("DefaultTimezone", ZoneId.systemDefault().getId());					// 调度中心默认时区
 
 		// 执行器列表
 		List<XxlJobGroup> jobGroupListTotal =  xxlJobGroupMapper.findAll();
@@ -171,7 +172,8 @@ public class JobInfoController {
 	@RequestMapping("/nextTriggerTime")
 	@ResponseBody
 	public Response<List<String>> nextTriggerTime(@RequestParam("scheduleType") String scheduleType,
-												 @RequestParam("scheduleConf") String scheduleConf) {
+												 @RequestParam("scheduleConf") String scheduleConf,
+												 @RequestParam(value = "scheduleTimezone", required = false) String scheduleTimezone) {
 
 		// valid
 		if (StringTool.isBlank(scheduleType) || StringTool.isBlank(scheduleConf)) {
@@ -182,6 +184,7 @@ public class JobInfoController {
 		XxlJobInfo paramXxlJobInfo = new XxlJobInfo();
 		paramXxlJobInfo.setScheduleType(scheduleType);
 		paramXxlJobInfo.setScheduleConf(scheduleConf);
+		paramXxlJobInfo.setScheduleTimezone(StringTool.isNotBlank(scheduleTimezone) ? scheduleTimezone.trim() : null);
 
 		// generate
 		List<String> result = new ArrayList<>();
