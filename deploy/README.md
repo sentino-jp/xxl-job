@@ -6,12 +6,12 @@
 
 ```
 deploy/systemd/xxl-job-admin.service            调度中心单元文件
-deploy/systemd/xxl-job-admin.env.example        调度中心环境文件模板
+xxl-job-admin/.env.example                       调度中心环境文件模板（与 coucou-server 同风格，DB_URL/DB_USER/DB_PASSWORD）
 deploy/systemd/xxl-job-executor-http.service    通用 HTTP 执行器单元文件
-deploy/systemd/xxl-job-executor-http.env.example
+xxl-job-executor-http/.env.example               通用 HTTP 执行器环境文件模板
 ```
 
-Spring Boot 会把环境变量按松散绑定映射到配置项，例如 `SPRING_DATASOURCE_URL` 对应 `spring.datasource.url`，`XXL_JOB_LOGRETENTIONDAYS` 对应 `xxl.job.logretentiondays`，所以 jar 内的 application.properties 不需要改，所有环境差异都在 `.env` 里。
+application.properties 里的环境相关项全部写成 `${ENV:默认值}` 占位（如 `spring.datasource.url=${DB_URL:...}`），变量名与 coucou-server 保持一致（DB_URL / DB_USER / DB_PASSWORD），所有环境差异都在 `.env` 里，jar 不用重新打包。本地运行前 `set -a && . ./.env && set +a`。
 
 ---
 
@@ -48,11 +48,11 @@ mvn -pl xxl-job-admin,xxl-job-executor-http -am package -Dmaven.test.skip=true
 sudo mkdir -p /data/xxl-job-admin/logs
 sudo chown -R ubuntu:ubuntu /data/xxl-job-admin
 scp xxl-job-admin/target/xxl-job-admin-3.5.0-SNAPSHOT.jar ubuntu@<node>:/data/xxl-job-admin/xxl-job-admin.jar
-scp deploy/systemd/xxl-job-admin.env.example        ubuntu@<node>:/data/xxl-job-admin/.env
+scp xxl-job-admin/.env                              ubuntu@<node>:/data/xxl-job-admin/.env      # 本地按 .env.example 填好的真实文件，不入库
 scp deploy/systemd/xxl-job-admin.service            ubuntu@<node>:/tmp/
 ```
 
-在节点上编辑 `/data/xxl-job-admin/.env`，填数据库地址与密码、Lark webhook 与签名、环境标识、调度中心对外地址，然后：
+确认 `/data/xxl-job-admin/.env` 内容正确（数据库地址与密码、Lark webhook 与签名、环境标识、调度中心对外地址），然后：
 
 ```bash
 chmod 600 /data/xxl-job-admin/.env
@@ -81,7 +81,7 @@ journalctl -u xxl-job-admin -f          # 看到 "Started XxlJobAdminApplication
 sudo mkdir -p /data/xxl-job-executor-http/logs
 sudo chown -R ubuntu:ubuntu /data/xxl-job-executor-http
 scp xxl-job-executor-http/target/xxl-job-executor-http-3.5.0-SNAPSHOT.jar ubuntu@<node>:/data/xxl-job-executor-http/xxl-job-executor-http.jar
-scp deploy/systemd/xxl-job-executor-http.env.example ubuntu@<node>:/data/xxl-job-executor-http/.env
+scp xxl-job-executor-http/.env                       ubuntu@<node>:/data/xxl-job-executor-http/.env
 scp deploy/systemd/xxl-job-executor-http.service     ubuntu@<node>:/tmp/
 # 编辑 .env：调度中心地址、AppName、AccessToken、本机私网 ip:port、目标域名白名单
 chmod 600 /data/xxl-job-executor-http/.env
@@ -136,7 +136,7 @@ ssh ubuntu@<node> 'cd /data/xxl-job-admin && mv xxl-job-admin.jar.bak xxl-job-ad
 ## 四、日常运维
 
 - **告警**：Lark 通道为全局配置，所有任务失败都发到 `.env` 里的群；邮件通道按任务的"报警邮箱"字段发送。
-- **日志清理**：调度日志按 `XXL_JOB_LOGRETENTIONDAYS` 自动清理；执行器侧日志文件按执行器配置的保留天数清理。
+- **日志清理**：调度日志按 `XXL_JOB_LOG_RETENTION_DAYS` 自动清理；执行器侧日志文件按执行器配置的保留天数清理。
 - **备份**：xxl_job 库纳入现有 PostgreSQL 备份；`.env` 文件单独备份，注意权限。
 - **监控**：调度中心 actuator 健康端点 `/actuator/health`；失败任务数可从 xxl_job_log 中 handle_code 非 200 的记录统计。
 - **修改配置**：改 `.env` 后 `sudo systemctl restart xxl-job-admin`，两台滚动重启。
