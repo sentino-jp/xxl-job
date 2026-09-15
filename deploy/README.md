@@ -32,21 +32,19 @@ application.properties 里的环境相关项全部是 `${ENV:默认值}` 占位�
 
 在 api-gateway/infra 仓库里做，网关机上生效。
 
-1. `dnsmasq/dnsmasq.conf` 增加一行：
+api-gateway 仓库分支 `infra/xxl-job-internal-gateway` 已包含全部改动（`infra/nginx/conf.d/xxl-job.conf`、`infra/dnsmasq/dnsmasq.conf` 的 `address=/xxl-job.internal.sentino.jp/<gateway_private_ip>`、`infra/scripts/setup.sh` 服务列表、服务清单文档），合并后按其 README 部署即可：
 
-   ```
-   address=/xxl-job.internal.sentino.jp/127.0.0.1
-   ```
-
-2. 把本仓库 `deploy/gateway/xxl-job.conf` 复制为 `nginx/conf.d/xxl-job.conf`。upstream 已写好三台节点 10.0.0.100 / 10.0.0.194 / 10.0.0.228 的 9280，与网关里 agent.conf 反代的是同一批机器。
-3. 网关机上部署并验证：
+1. 网关机上拉取 api-gateway 最新代码，`./infra/scripts/setup.sh` 会把 dnsmasq 里的 `<gateway_private_ip>` 占位替换成网关私网 IP 并重启 dnsmasq（也可手工执行：在 `/etc/dnsmasq.conf` 加 `address=/xxl-job.internal.sentino.jp/<网关私网IP>` 后 `sudo systemctl restart dnsmasq`）。
+2. 部署 nginx 配置并验证：
 
    ```bash
-   sudo systemctl restart dnsmasq
-   sudo cp nginx/conf.d/xxl-job.conf /etc/nginx/conf.d/
+   sudo cp infra/nginx/conf.d/xxl-job.conf /etc/nginx/conf.d/
    sudo nginx -t && sudo systemctl reload nginx
-   dig xxl-job.internal.sentino.jp          # 应解析到网关机
+   dig xxl-job.internal.sentino.jp          # 应解析到网关机私网 IP
    ```
+
+   本仓库 `deploy/gateway/xxl-job.conf` 是同一份配置的副本，以 api-gateway 仓库为准。
+3. upstream 是三台节点 10.0.0.100 / 10.0.0.194 / 10.0.0.228 的 9280，与网关里 agent.conf 反代的是同一批机器。
 
    此时调度中心还没起来，curl 会返回 502，等第 4 步之后再验。
 
