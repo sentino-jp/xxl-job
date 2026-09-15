@@ -18,3 +18,13 @@ package-lock.json
 .claude
 .specify
 specs
+
+# env / secrets: only .env.example is committed
+.env
+.env.*
+!.env.example
+.env*.bak*
+
+# local run artifacts & browser automation output
+/local/
+.playwright-mcp/

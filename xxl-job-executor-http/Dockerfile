@@ -17,5 +17,5 @@ EXPOSE 9999
 # command
 # log home: -e LOG_HOME=/data/applogs
 # jvm options: -e JAVA_OPTS="-Xms128m -Xmx256m"
-# app params: -e PARAMS="--xxl.job.admin.addresses=http://xxl-job-admin:8080"
+# app params: -e PARAMS="--xxl.job.admin.addresses=http://xxl-job-admin:9280"
 ENTRYPOINT ["sh","-c","java ${LOG_HOME:+-DLOG_HOME=$LOG_HOME} -jar $JAVA_OPTS /app.jar $PARAMS"]
