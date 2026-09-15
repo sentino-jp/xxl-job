@@ -19,6 +19,7 @@ public class XxlJobInfo {
 
 	private String scheduleType;			// 调度类型：ScheduleTypeEnum
 	private String scheduleConf;			// 调度配置，值含义取决于调度类型
+	private String scheduleTimezone;		// 调度时区：CRON类型生效，为空则使用调度中心默认时区
 	private String misfireStrategy;			// 调度过期策略：MisfireStrategyEnum
 
 	private String executorRouteStrategy;	// 执行器路由策略：ExecutorRouteStrategyEnum
@@ -28,11 +29,6 @@ public class XxlJobInfo {
 	private int executorTimeout;     		// 任务执行超时时间，单位秒
 	private int executorFailRetryCount;		// 失败重试次数
 	
-	private String glueType;		// GLUE类型：GlueTypeEnum
-	private String glueSource;		// GLUE源代码
-	private String glueRemark;		// GLUE备注
-	private Date glueUpdatetime;	// GLUE更新时间
-
 	private String childJobId;		// 子任务ID，多个逗号分隔
 
 	private int triggerStatus;		// 调度状态：TriggerStatus
@@ -99,6 +95,14 @@ public class XxlJobInfo {
 		this.scheduleConf = scheduleConf;
 	}
 
+	public String getScheduleTimezone() {
+		return scheduleTimezone;
+	}
+
+	public void setScheduleTimezone(String scheduleTimezone) {
+		this.scheduleTimezone = scheduleTimezone;
+	}
+
 	public String getMisfireStrategy() {
 		return misfireStrategy;
 	}
@@ -153,38 +157,6 @@ public class XxlJobInfo {
 
 	public void setExecutorFailRetryCount(int executorFailRetryCount) {
 		this.executorFailRetryCount = executorFailRetryCount;
-	}
-
-	public String getGlueType() {
-		return glueType;
-	}
-
-	public void setGlueType(String glueType) {
-		this.glueType = glueType;
-	}
-
-	public String getGlueSource() {
-		return glueSource;
-	}
-
-	public void setGlueSource(String glueSource) {
-		this.glueSource = glueSource;
-	}
-
-	public String getGlueRemark() {
-		return glueRemark;
-	}
-
-	public void setGlueRemark(String glueRemark) {
-		this.glueRemark = glueRemark;
-	}
-
-	public Date getGlueUpdatetime() {
-		return glueUpdatetime;
-	}
-
-	public void setGlueUpdatetime(Date glueUpdatetime) {
-		this.glueUpdatetime = glueUpdatetime;
 	}
 
 	public String getChildJobId() {

@@ -27,14 +27,12 @@ public class XxlJobFileAppender {
 	 *
 	 * strut like:
 	 * 	---/
-	 * 	---/gluesource/10_1514171108000.js
 	 * 	---/callbacklogs/xxl-job-callback-1761412677119.log
 	 * 	---/2017-12-25/639.log
 	 * 	---/2017-12-25/821.log
 	 *
 	 */
 	private static String logBasePath;
-	private static String glueSrcPath;
 	private static String callbackLogPath;
 
 	/**
@@ -52,11 +50,6 @@ public class XxlJobFileAppender {
         FileTool.createDirectories(logPathDir);
 		logBasePath = logPathDir.getPath();
 
-		// mk glue dir
-		File glueBaseDir = new File(logPathDir, "gluesource");
-        FileTool.createDirectories(glueBaseDir);
-		glueSrcPath = glueBaseDir.getPath();
-
 		// mk callback log dir
 		File callbackBaseDir = new File(logPathDir, "callbacklogs");
         FileTool.createDirectories(callbackBaseDir);
@@ -64,9 +57,6 @@ public class XxlJobFileAppender {
 	}
 	public static String getLogPath() {
 		return logBasePath;
-	}
-	public static String getGlueSrcPath() {
-		return glueSrcPath;
 	}
 	public static String getCallbackLogPath() {
 		return callbackLogPath;

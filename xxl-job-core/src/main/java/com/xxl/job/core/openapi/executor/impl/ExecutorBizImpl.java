@@ -3,11 +3,7 @@ package com.xxl.job.core.openapi.executor.impl;
 import com.xxl.job.core.constant.ExecutorBlockStrategyEnum;
 import com.xxl.job.core.context.XxlJobContext;
 import com.xxl.job.core.executor.XxlJobExecutor;
-import com.xxl.job.core.glue.GlueFactory;
-import com.xxl.job.core.glue.GlueTypeEnum;
 import com.xxl.job.core.handler.IJobHandler;
-import com.xxl.job.core.handler.impl.GlueJobHandler;
-import com.xxl.job.core.handler.impl.ScriptJobHandler;
 import com.xxl.job.core.log.XxlJobFileAppender;
 import com.xxl.job.core.openapi.executor.ExecutorBiz;
 import com.xxl.job.core.openapi.executor.dto.*;
@@ -48,86 +44,29 @@ public class ExecutorBizImpl implements ExecutorBiz {
     @Override
     public Response<String> trigger(TriggerRequest triggerRequest) {
 
-        // load job info：jobHandler + jobThread + glueTypeEnum
+        // load job info：jobHandler + jobThread
         JobThread jobThread = XxlJobExecutor.getInstance().loadJobThread(triggerRequest.getJobId());
         IJobHandler jobHandler = jobThread!=null?jobThread.getHandler():null;
         String removeOldReason = null;
-        GlueTypeEnum glueTypeEnum = GlueTypeEnum.match(triggerRequest.getGlueType());
 
-        // valid glue (non-BEAN) enabled
-        if (glueTypeEnum != null && GlueTypeEnum.BEAN != glueTypeEnum) {
-            boolean glueEnabled = XxlJobExecutor.getInstance().getGlueEnabled();
-            if (!glueEnabled) {
-                logger.warn(">>>>>>>>>>> xxl-job executor not support current glue type[{}], please check executor configuration.", glueTypeEnum.getDesc());
-                return Response.of(XxlJobContext.HANDLE_CODE_FAIL, "fail, current glue type ["+ glueTypeEnum.getDesc() +"] not supported.");
-            }
+        // new jobhandler (BEAN)
+        IJobHandler newJobHandler = XxlJobExecutor.getInstance().loadJobHandler(triggerRequest.getExecutorHandler());
+
+        // valid old jobThread
+        if (jobThread!=null && jobHandler != newJobHandler) {
+            // change handler, need kill old thread
+            removeOldReason = "change jobhandler, and terminate the old job thread.";
+
+            jobThread = null;
+            jobHandler = null;
         }
 
-        // dispatch handler
-        if (GlueTypeEnum.BEAN == glueTypeEnum) {
-
-            // new jobhandler
-            IJobHandler newJobHandler = XxlJobExecutor.getInstance().loadJobHandler(triggerRequest.getExecutorHandler());
-
-            // valid old jobThread
-            if (jobThread!=null && jobHandler != newJobHandler) {
-                // change handler, need kill old thread
-                removeOldReason = "change jobhandler or glue type, and terminate the old job thread.";
-
-                jobThread = null;
-                jobHandler = null;
-            }
-
-            // valid handler
+        // valid handler
+        if (jobHandler == null) {
+            jobHandler = newJobHandler;
             if (jobHandler == null) {
-                jobHandler = newJobHandler;
-                if (jobHandler == null) {
-                    return Response.of(XxlJobContext.HANDLE_CODE_FAIL, "job handler [" + triggerRequest.getExecutorHandler() + "] not found.");
-                }
+                return Response.of(XxlJobContext.HANDLE_CODE_FAIL, "job handler [" + triggerRequest.getExecutorHandler() + "] not found.");
             }
-
-        } else if (GlueTypeEnum.GLUE_GROOVY == glueTypeEnum) {
-
-            // valid old jobThread
-            if (jobThread != null &&
-                    !(jobThread.getHandler() instanceof GlueJobHandler
-                        && ((GlueJobHandler) jobThread.getHandler()).getGlueUpdatetime()== triggerRequest.getGlueUpdatetime() )) {
-                // change handler or gluesource updated, need kill old thread
-                removeOldReason = "change job source or glue type, and terminate the old job thread.";
-
-                jobThread = null;
-                jobHandler = null;
-            }
-
-            // valid handler
-            if (jobHandler == null) {
-                try {
-                    IJobHandler originJobHandler = GlueFactory.getInstance().loadNewInstance(triggerRequest.getGlueSource());
-                    jobHandler = new GlueJobHandler(originJobHandler, triggerRequest.getGlueUpdatetime());
-                } catch (Exception e) {
-                    logger.error(e.getMessage(), e);
-                    return Response.of(XxlJobContext.HANDLE_CODE_FAIL, e.getMessage());
-                }
-            }
-        } else if (glueTypeEnum!=null && glueTypeEnum.isScript()) {
-
-            // valid old jobThread
-            if (jobThread != null &&
-                    !(jobThread.getHandler() instanceof ScriptJobHandler
-                            && ((ScriptJobHandler) jobThread.getHandler()).getGlueUpdatetime()== triggerRequest.getGlueUpdatetime() )) {
-                // change script or gluesource updated, need kill old thread
-                removeOldReason = "change job source or glue type, and terminate the old job thread.";
-
-                jobThread = null;
-                jobHandler = null;
-            }
-
-            // valid handler
-            if (jobHandler == null) {
-                jobHandler = new ScriptJobHandler(triggerRequest.getJobId(), triggerRequest.getGlueUpdatetime(), triggerRequest.getGlueSource(), GlueTypeEnum.match(triggerRequest.getGlueType()));
-            }
-        } else {
-            return Response.of(XxlJobContext.HANDLE_CODE_FAIL, "glueType[" + triggerRequest.getGlueType() + "] is not valid.");
         }
 
         // executor block strategy

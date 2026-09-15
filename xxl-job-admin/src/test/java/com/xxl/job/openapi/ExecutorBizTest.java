@@ -4,7 +4,6 @@ import com.xxl.job.core.constant.Const;
 import com.xxl.job.core.openapi.executor.ExecutorBiz;
 import com.xxl.job.core.openapi.executor.dto.*;
 import com.xxl.job.core.constant.ExecutorBlockStrategyEnum;
-import com.xxl.job.core.glue.GlueTypeEnum;
 import com.xxl.tool.http.HttpTool;
 import com.xxl.tool.response.Response;
 import org.junit.jupiter.api.Assertions;
@@ -72,9 +71,6 @@ public class ExecutorBizTest {
         triggerParam.setExecutorHandler("demoJobHandler");
         triggerParam.setExecutorParams(null);
         triggerParam.setExecutorBlockStrategy(ExecutorBlockStrategyEnum.COVER_EARLY.name());
-        triggerParam.setGlueType(GlueTypeEnum.BEAN.name());
-        triggerParam.setGlueSource(null);
-        triggerParam.setGlueUpdatetime(System.currentTimeMillis());
         triggerParam.setLogId(1);
         triggerParam.setLogDateTime(System.currentTimeMillis());
 

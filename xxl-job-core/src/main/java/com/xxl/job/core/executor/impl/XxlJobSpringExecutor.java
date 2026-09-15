@@ -1,7 +1,6 @@
 package com.xxl.job.core.executor.impl;
 
 import com.xxl.job.core.executor.XxlJobExecutor;
-import com.xxl.job.core.glue.GlueFactory;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,9 +50,6 @@ public class XxlJobSpringExecutor extends XxlJobExecutor implements ApplicationC
 
         // scan JobHandler method
         scanJobHandlerMethod(applicationContext);
-
-        // refresh GlueFactory
-        GlueFactory.refreshInstance(1);
 
         // super start
         try {

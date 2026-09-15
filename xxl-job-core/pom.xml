@@ -45,13 +45,7 @@
 			<artifactId>xxl-tool</artifactId>
 		</dependency>
 
-		<!-- ********************** plugin: groovy + spring ********************** -->
-		<!-- groovy-all -->
-		<dependency>
-			<groupId>org.apache.groovy</groupId>
-			<artifactId>groovy</artifactId>
-		</dependency>
-
+		<!-- ********************** plugin: spring ********************** -->
 		<!-- spring-context -->
 		<dependency>
 			<groupId>org.springframework</groupId>

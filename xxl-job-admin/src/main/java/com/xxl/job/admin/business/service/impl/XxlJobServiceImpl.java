@@ -16,7 +16,7 @@ import com.xxl.job.admin.business.service.XxlJobService;
 import com.xxl.job.admin.framework.util.I18nUtil;
 import com.xxl.job.admin.framework.util.JobGroupPermissionUtil;
 import com.xxl.job.core.constant.ExecutorBlockStrategyEnum;
-import com.xxl.job.core.glue.GlueTypeEnum;
+import com.xxl.job.core.handler.http.HttpJobHandler;
 import com.xxl.sso.core.model.LoginInfo;
 import com.xxl.tool.core.DateTool;
 import com.xxl.tool.core.StringTool;
@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -45,8 +46,6 @@ public class XxlJobServiceImpl implements XxlJobService {
 	private XxlJobInfoMapper xxlJobInfoMapper;
 	@Resource
 	public XxlJobLogMapper xxlJobLogMapper;
-	@Resource
-	private XxlJobLogGlueMapper xxlJobLogGlueMapper;
 	@Resource
 	private XxlJobLogReportMapper xxlJobLogReportMapper;
 	
@@ -87,6 +86,15 @@ public class XxlJobServiceImpl implements XxlJobService {
 		if (scheduleTypeEnum == null) {
 			return Response.ofFail ( (I18nUtil.getString("schedule_type")+I18nUtil.getString("system_invalid")) );
 		}
+		if (StringTool.isNotBlank(jobInfo.getScheduleTimezone())) {
+			try {
+				jobInfo.setScheduleTimezone(ZoneId.of(jobInfo.getScheduleTimezone().trim()).getId());
+			} catch (Exception e) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_field_timezone")+I18nUtil.getString("system_invalid")) );
+			}
+		} else {
+			jobInfo.setScheduleTimezone(null);
+		}
 		if (scheduleTypeEnum == ScheduleTypeEnum.CRON) {
 			if (jobInfo.getScheduleConf()==null || !CronExpression.isValidExpression(jobInfo.getScheduleConf())) {
 				return Response.ofFail ( "Cron"+I18nUtil.getString("system_invalid"));
@@ -106,15 +114,16 @@ public class XxlJobServiceImpl implements XxlJobService {
 		}
 
 		// valid job
-		if (GlueTypeEnum.match(jobInfo.getGlueType()) == null) {
-			return Response.ofFail ( (I18nUtil.getString("jobinfo_field_gluetype")+I18nUtil.getString("system_invalid")) );
-		}
-		if (GlueTypeEnum.BEAN==GlueTypeEnum.match(jobInfo.getGlueType()) && StringTool.isBlank(jobInfo.getExecutorHandler()) ) {
+		if (StringTool.isBlank(jobInfo.getExecutorHandler())) {
 			return Response.ofFail ( (I18nUtil.getString("system_please_input")+"JobHandler") );
 		}
-		// 》fix "\r" in shell
-		if (GlueTypeEnum.GLUE_SHELL==GlueTypeEnum.match(jobInfo.getGlueType()) && jobInfo.getGlueSource()!=null) {
-			jobInfo.setGlueSource(jobInfo.getGlueSource().replaceAll("\r", ""));
+
+		// valid http job param (built-in httpJobHandler)
+		if (jobInfo.getExecutorHandler() != null && HttpJobHandler.HANDLER_NAME.equals(jobInfo.getExecutorHandler().trim())) {
+			String httpParamError = HttpJobHandler.validParam(jobInfo.getExecutorParam());
+			if (httpParamError != null) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_http_param")+I18nUtil.getString("system_invalid")) + ": " + httpParamError );
+			}
 		}
 
 		// valid advanced
@@ -162,7 +171,6 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// add in db
 		jobInfo.setAddTime(new Date());
 		jobInfo.setUpdateTime(new Date());
-		jobInfo.setGlueUpdatetime(new Date());
 		// remove the whitespace
 		jobInfo.setExecutorHandler(jobInfo.getExecutorHandler().trim());
 
@@ -202,6 +210,15 @@ public class XxlJobServiceImpl implements XxlJobService {
 		if (scheduleTypeEnum == null) {
 			return Response.ofFail ( (I18nUtil.getString("schedule_type")+I18nUtil.getString("system_invalid")) );
 		}
+		if (StringTool.isNotBlank(jobInfo.getScheduleTimezone())) {
+			try {
+				jobInfo.setScheduleTimezone(ZoneId.of(jobInfo.getScheduleTimezone().trim()).getId());
+			} catch (Exception e) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_field_timezone")+I18nUtil.getString("system_invalid")) );
+			}
+		} else {
+			jobInfo.setScheduleTimezone(null);
+		}
 		if (scheduleTypeEnum == ScheduleTypeEnum.CRON) {
 			if (jobInfo.getScheduleConf()==null || !CronExpression.isValidExpression(jobInfo.getScheduleConf())) {
 				return Response.ofFail ( "Cron"+I18nUtil.getString("system_invalid") );
@@ -217,6 +234,14 @@ public class XxlJobServiceImpl implements XxlJobService {
 				}
 			} catch (Exception e) {
 				return Response.ofFail ( (I18nUtil.getString("schedule_type")+I18nUtil.getString("system_invalid")) );
+			}
+		}
+
+		// valid http job param (built-in httpJobHandler)
+		if (jobInfo.getExecutorHandler() != null && HttpJobHandler.HANDLER_NAME.equals(jobInfo.getExecutorHandler().trim())) {
+			String httpParamError = HttpJobHandler.validParam(jobInfo.getExecutorParam());
+			if (httpParamError != null) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_http_param")+I18nUtil.getString("system_invalid")) + ": " + httpParamError );
 			}
 		}
 
@@ -278,7 +303,8 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// next trigger time (5s后生效，避开预读周期)
 		long nextTriggerTime = exists_jobInfo.getTriggerNextTime();
 		boolean scheduleDataNotChanged = jobInfo.getScheduleType().equals(exists_jobInfo.getScheduleType())
-				&& jobInfo.getScheduleConf().equals(exists_jobInfo.getScheduleConf());		// 触发配置如果不变，避免重复计算；
+				&& jobInfo.getScheduleConf().equals(exists_jobInfo.getScheduleConf())
+				&& Objects.equals(jobInfo.getScheduleTimezone(), exists_jobInfo.getScheduleTimezone());		// 触发配置如果不变，避免重复计算；
 		if (exists_jobInfo.getTriggerStatus() == TriggerStatus.RUNNING.getValue() && !scheduleDataNotChanged) {
 			try {
 				// generate next trigger time
@@ -301,6 +327,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		exists_jobInfo.setAlarmEmail(jobInfo.getAlarmEmail());
 		exists_jobInfo.setScheduleType(jobInfo.getScheduleType());
 		exists_jobInfo.setScheduleConf(jobInfo.getScheduleConf());
+		exists_jobInfo.setScheduleTimezone(jobInfo.getScheduleTimezone());
 		exists_jobInfo.setMisfireStrategy(jobInfo.getMisfireStrategy());
 		exists_jobInfo.setExecutorRouteStrategy(jobInfo.getExecutorRouteStrategy());
 		exists_jobInfo.setExecutorHandler(jobInfo.getExecutorHandler().trim());				// remove the whitespace
@@ -336,7 +363,6 @@ public class XxlJobServiceImpl implements XxlJobService {
 
 		xxlJobInfoMapper.delete(id);
 		xxlJobLogMapper.delete(id);
-		xxlJobLogGlueMapper.deleteByJobId(id);
 
 		// write operation log
 		logger.info(">>>>>>>>>>> xxl-job operation log: operator = {}, type = {}, content = {}",
@@ -350,7 +376,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// load and valid
 		XxlJobInfo xxlJobInfo = xxlJobInfoMapper.loadById(id);
 		if (xxlJobInfo == null) {
-			return Response.ofFail(I18nUtil.getString("jobinfo_glue_jobid_invalid"));
+			return Response.ofFail(I18nUtil.getString("jobinfo_jobid_invalid"));
 		}
 
 		// valid jobGroup permission
@@ -398,7 +424,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// load and valid
         XxlJobInfo xxlJobInfo = xxlJobInfoMapper.loadById(id);
 		if (xxlJobInfo == null) {
-			return Response.ofFail(I18nUtil.getString("jobinfo_glue_jobid_invalid"));
+			return Response.ofFail(I18nUtil.getString("jobinfo_jobid_invalid"));
 		}
 
 		// valid jobGroup permission
@@ -426,7 +452,7 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// valid job
 		XxlJobInfo xxlJobInfo = xxlJobInfoMapper.loadById(jobId);
 		if (xxlJobInfo == null) {
-			return Response.ofFail(I18nUtil.getString("jobinfo_glue_jobid_invalid"));
+			return Response.ofFail(I18nUtil.getString("jobinfo_jobid_invalid"));
 		}
 
 		// valid jobGroup permission

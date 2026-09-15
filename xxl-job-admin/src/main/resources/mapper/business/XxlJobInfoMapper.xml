@@ -17,6 +17,7 @@
 
 		<result column="schedule_type" property="scheduleType" />
 		<result column="schedule_conf" property="scheduleConf" />
+		<result column="schedule_timezone" property="scheduleTimezone" />
 		<result column="misfire_strategy" property="misfireStrategy" />
 
 		<result column="executor_route_strategy" property="executorRouteStrategy" />
@@ -26,10 +27,6 @@
 		<result column="executor_timeout" property="executorTimeout" />
 		<result column="executor_fail_retry_count" property="executorFailRetryCount" />
 
-	    <result column="glue_type" property="glueType" />
-	    <result column="glue_source" property="glueSource" />
-	    <result column="glue_remark" property="glueRemark" />
-		<result column="glue_updatetime" property="glueUpdatetime" />
 
 		<result column="child_jobid" property="childJobId" />
 
@@ -48,6 +45,7 @@
 		t.alarm_email,
 		t.schedule_type,
 		t.schedule_conf,
+		t.schedule_timezone,
 		t.misfire_strategy,
 		t.executor_route_strategy,
 		t.executor_handler,
@@ -55,10 +53,6 @@
 		t.executor_block_strategy,
 		t.executor_timeout,
 		t.executor_fail_retry_count,
-		t.glue_type,
-		t.glue_source,
-		t.glue_remark,
-		t.glue_updatetime,
 		t.child_jobid,
 		t.trigger_status,
 		t.trigger_last_time,
@@ -86,7 +80,7 @@
 			</if>
 		</trim>
 		ORDER BY id DESC
-		LIMIT #{offset}, #{pagesize}
+		LIMIT #{pagesize} OFFSET #{offset}
 	</select>
 
 	<select id="pageListCount" parameterType="java.util.HashMap" resultType="int">
@@ -121,6 +115,7 @@
 			alarm_email,
 			schedule_type,
 			schedule_conf,
+			schedule_timezone,
 			misfire_strategy,
             executor_route_strategy,
 			executor_handler,
@@ -128,10 +123,6 @@
 			executor_block_strategy,
 			executor_timeout,
 			executor_fail_retry_count,
-			glue_type,
-			glue_source,
-			glue_remark,
-			glue_updatetime,
 			child_jobid,
 			trigger_status,
 			trigger_last_time,
@@ -145,6 +136,7 @@
 			#{alarmEmail},
 			#{scheduleType},
 			#{scheduleConf},
+			#{scheduleTimezone},
 			#{misfireStrategy},
 			#{executorRouteStrategy},
 			#{executorHandler},
@@ -152,15 +144,11 @@
 			#{executorBlockStrategy},
 			#{executorTimeout},
 			#{executorFailRetryCount},
-			#{glueType},
-			#{glueSource},
-			#{glueRemark},
-			#{glueUpdatetime},
 			#{childJobId},
 			#{triggerStatus},
 			#{triggerLastTime},
 			#{triggerNextTime}
-		);
+		)
 		<!--<selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
 			SELECT LAST_INSERT_ID()
 			/*SELECT @@IDENTITY AS id*/
@@ -183,6 +171,7 @@
 			alarm_email = #{alarmEmail},
 			schedule_type = #{scheduleType},
 			schedule_conf = #{scheduleConf},
+			schedule_timezone = #{scheduleTimezone},
 			misfire_strategy = #{misfireStrategy},
 			executor_route_strategy = #{executorRouteStrategy},
 			executor_handler = #{executorHandler},
@@ -190,10 +179,6 @@
 			executor_block_strategy = #{executorBlockStrategy},
 			executor_timeout = #{executorTimeout},
 			executor_fail_retry_count = #{executorFailRetryCount},
-			glue_type = #{glueType},
-			glue_source = #{glueSource},
-			glue_remark = #{glueRemark},
-			glue_updatetime = #{glueUpdatetime},
 			child_jobid = #{childJobId},
 			trigger_status = #{triggerStatus},
 			trigger_last_time = #{triggerLastTime},

@@ -48,14 +48,10 @@ public class XxlJobInfoMapperTest {
 		info.setExecutorHandler("setExecutorHandler");
 		info.setExecutorParam("setExecutorParam");
 		info.setExecutorBlockStrategy("setExecutorBlockStrategy");
-		info.setGlueType("setGlueType");
-		info.setGlueSource("setGlueSource");
-		info.setGlueRemark("setGlueRemark");
 		info.setChildJobId("1");
 
 		info.setAddTime(new Date());
 		info.setUpdateTime(new Date());
-		info.setGlueUpdatetime(new Date());
 
 		int count = xxlJobInfoMapper.save(info);
 
@@ -70,10 +66,6 @@ public class XxlJobInfoMapperTest {
 		info2.setExecutorHandler("setExecutorHandler2");
 		info2.setExecutorParam("setExecutorParam2");
 		info2.setExecutorBlockStrategy("setExecutorBlockStrategy2");
-		info2.setGlueType("setGlueType2");
-		info2.setGlueSource("setGlueSource2");
-		info2.setGlueRemark("setGlueRemark2");
-		info2.setGlueUpdatetime(new Date());
 		info2.setChildJobId("1");
 
 		info2.setUpdateTime(new Date());

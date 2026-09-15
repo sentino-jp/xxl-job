@@ -184,7 +184,7 @@ public class JobLogController {
 		XxlJobLog log = xxlJobLogMapper.load(id);
 		XxlJobInfo jobInfo = xxlJobInfoMapper.loadById(log.getJobId());
 		if (jobInfo==null) {
-			return Response.ofFail(I18nUtil.getString("jobinfo_glue_jobid_invalid"));
+			return Response.ofFail(I18nUtil.getString("jobinfo_jobid_invalid"));
 		}
 		if (XxlJobContext.HANDLE_CODE_SUCCESS != log.getTriggerCode()) {
 			return Response.ofFail( I18nUtil.getString("joblog_kill_log_limit"));

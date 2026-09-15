@@ -75,7 +75,6 @@
 					<div class="box-header pull-left" id="data_operation" >
 						<button class="btn btn-sm btn-info add" type="button"><i class="fa fa-plus" ></i>${I18n.system_opt_add}</button>                        <#-- add -->
 						<button class="btn btn-sm btn-warning selectOnlyOne update" type="button"><i class="fa fa-edit"></i>${I18n.system_opt_edit}</button>    <#-- update -->
-                        <button class="btn btn-sm btn-warning selectOnlyOne glue_ide" type="button">GLUE IDE</button>									        <#-- GLUE IDE：'BEAN' != row.glueType -->
 						<button class="btn btn-sm btn-danger selectOnlyOne delete" type="button"><i class="fa fa-remove "></i>${I18n.system_opt_del}</button>   <#-- delete -->
 						｜
 						<button class="btn btn-sm btn-default selectOnlyOne job_copy" type="button">${I18n.system_opt_copy}</button>
@@ -97,6 +96,13 @@
 				</div>
 			</div>
 		</div>
+
+		<#-- 时区候选列表 -->
+		<datalist id="timezoneList">
+			<#list TimezoneList as tz>
+				<option value="${tz}">
+			</#list>
+		</datalist>
 
 		<!-- job新增.模态框 -->
 		<div class="modal fade" id="addModal" tabindex="-1" role="dialog"  aria-hidden="true">
@@ -148,6 +154,10 @@
 									<label for="lastname" class="col-sm-2 control-label">Cron<font color="red">*</font></label>
 									<div class="col-sm-4"><input type="text" class="form-control" name="schedule_conf_CRON" placeholder="${I18n.system_please_input}Cron" maxlength="128" ></div>
 								</div>
+								<div class="schedule_conf schedule_conf_CRON" >
+									<label for="lastname" class="col-sm-2 control-label">${I18n.jobinfo_field_timezone}</label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="scheduleTimezone" list="timezoneList" placeholder="${I18n.jobinfo_field_timezone_placeholder}：${DefaultTimezone}" maxlength="64" autocomplete="off" ></div>
+								</div>
 								<div class="schedule_conf schedule_conf_FIX_RATE" style="display: none" >
 									<label for="lastname" class="col-sm-2 control-label">${I18n.schedule_type_fix_rate}<font color="red">*</font></label>
 									<div class="col-sm-4"><input type="text" class="form-control" name="schedule_conf_FIX_RATE" placeholder="${I18n.system_please_input} （ Second ）" maxlength="10" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
@@ -162,22 +172,63 @@
 							<p style="margin: 0 0 10px;text-align: left;border-bottom: 1px solid #e5e5e5;color: gray;">${I18n.jobinfo_conf_job}</p>    <#-- 任务配置 -->
 
 							<div class="form-group">
-								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_gluetype}<font color="red">*</font></label>
+								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_invoketype}<font color="red">*</font></label>
 								<div class="col-sm-4">
-									<select class="form-control glueType" name="glueType" >
-										<#list GlueTypeEnum as item>
-											<option value="${item}" >${item.desc}</option>
-										</#list>
+									<select class="form-control invokeType" name="invokeType" >
+										<option value="BEAN" selected>${I18n.jobinfo_invoketype_bean}</option>
+										<option value="HTTP">${I18n.jobinfo_invoketype_http}</option>
 									</select>
 								</div>
-								<label for="firstname" class="col-sm-2 control-label">JobHandler<font color="red">*</font></label>
-								<div class="col-sm-4"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
+								<label for="firstname" class="col-sm-2 control-label invoke_conf invoke_conf_BEAN">JobHandler<font color="red">*</font></label>
+								<div class="col-sm-4 invoke_conf invoke_conf_BEAN"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
 							</div>
 
-							<div class="form-group">
+							<div class="form-group invoke_conf invoke_conf_BEAN">
 								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_executorparam}<font color="black">*</font></label>
 								<div class="col-sm-10">
 									<textarea class="textarea form-control" name="executorParam" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_executorparam}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+								</div>
+							</div>
+
+							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_method" >
+											<option value="POST">POST</option>
+											<option value="GET">GET</option>
+											<option value="PUT">PUT</option>
+											<option value="DELETE">DELETE</option>
+											<option value="HEAD">HEAD</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_contenttype}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_contentType" >
+											<option value="application/json">JSON</option>
+											<option value="application/x-www-form-urlencoded">Form</option>
+											<option value="text/plain">Text</option>
+											<option value="application/xml">XML</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_timeout}</label>
+									<div class="col-sm-2"><input type="text" class="form-control" name="http_timeout" value="30" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_headers}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_headers" placeholder="${I18n.jobinfo_http_headers_placeholder} ${r"${ENV_NAME}"}" maxlength="2048" style="height: 60px; line-height: 1.2;"></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_body}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_body" placeholder="${I18n.system_please_input}${I18n.jobinfo_http_body}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+									</div>
 								</div>
 							</div>
 
@@ -233,125 +284,6 @@
 								</div>
 							</div>
 
-<input type="hidden" name="glueRemark" value="GLUE代码初始化" >
-<textarea name="glueSource" style="display:none;" ></textarea>
-<textarea class="glueSource_java" style="display:none;" >
-package com.xxl.job.service.handler;
-
-import com.xxl.job.core.context.XxlJobHelper;
-import com.xxl.job.core.handler.IJobHandler;
-
-public class DemoGlueJobHandler extends IJobHandler {
-
-	@Override
-	public void execute() throws Exception {
-		XxlJobHelper.log("XXL-JOB, Hello World.");
-	}
-
-}
-</textarea>
-<textarea class="glueSource_shell" style="display:none;" >
-#!/bin/bash
-echo "xxl-job: hello shell"
-
-echo "${I18n.jobinfo_script_location}：$0"
-echo "${I18n.jobinfo_field_executorparam}：$1"
-echo "${I18n.jobinfo_shard_index} = $2"
-echo "${I18n.jobinfo_shard_total} = $3"
-<#--echo "参数数量：$#"
-for param in $*
-do
-    echo "参数 : $param"
-    sleep 1s
-done-->
-
-echo "Good bye!"
-exit 0
-</textarea>
-<textarea class="glueSource_python" style="display:none;" >
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
-import time
-import sys
-
-print("xxl-job: hello python")
-
-print("${I18n.jobinfo_script_location}：", sys.argv[0])
-print("${I18n.jobinfo_field_executorparam}：", sys.argv[1])
-print("${I18n.jobinfo_shard_index}：", sys.argv[2])
-print("${I18n.jobinfo_shard_total}：", sys.argv[3])
-
-print("Good bye!")
-exit(0)
-</textarea>
-<textarea class="glueSource_python2" style="display:none;" >
-#!/usr/bin/python
-# -*- coding: UTF-8 -*-
-import time
-import sys
-
-print "xxl-job: hello python"
-
-print "${I18n.jobinfo_script_location}：", sys.argv[0]
-print "${I18n.jobinfo_field_executorparam}：", sys.argv[1]
-print "${I18n.jobinfo_shard_index}：", sys.argv[2]
-print "${I18n.jobinfo_shard_total}：", sys.argv[3]
-<#--for i in range(1, len(sys.argv)):
-	time.sleep(1)
-	print "参数", i, sys.argv[i]-->
-
-print "Good bye!"
-exit(0)
-<#--
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logging.info("脚本文件：" + sys.argv[0])
--->
-</textarea>
-<textarea class="glueSource_php" style="display:none;" >
-<?php
-
-    echo "xxl-job: hello php  \n";
-
-    echo "${I18n.jobinfo_script_location}：$argv[0]  \n";
-    echo "${I18n.jobinfo_field_executorparam}：$argv[1]  \n";
-    echo "${I18n.jobinfo_shard_index} = $argv[2]  \n";
-    echo "${I18n.jobinfo_shard_total} = $argv[3]  \n";
-
-    echo "Good bye!  \n";
-    exit(0);
-
-?>
-</textarea>
-<textarea class="glueSource_nodejs" style="display:none;" >
-#!/usr/bin/env node
-console.log("xxl-job: hello nodejs")
-
-var arguments = process.argv
-
-console.log("${I18n.jobinfo_script_location}: " + arguments[1])
-console.log("${I18n.jobinfo_field_executorparam}: " + arguments[2])
-console.log("${I18n.jobinfo_shard_index}: " + arguments[3])
-console.log("${I18n.jobinfo_shard_total}: " + arguments[4])
-<#--for (var i = 2; i < arguments.length; i++){
-	console.log("参数 %s = %s", (i-1), arguments[i]);
-}-->
-
-console.log("Good bye!")
-process.exit(0)
-</textarea>
-<textarea class="glueSource_powershell" style="display:none;" >
-Write-Host "xxl-job: hello powershell"
-
-Write-Host "${I18n.jobinfo_script_location}: " $MyInvocation.MyCommand.Definition
-Write-Host "${I18n.jobinfo_field_executorparam}: "
-	if ($args.Count -gt 2) { $args[0..($args.Count-3)] }
-Write-Host "${I18n.jobinfo_shard_index}: " $args[$args.Count-2]
-Write-Host "${I18n.jobinfo_shard_total}: " $args[$args.Count-1]
-
-Write-Host "Good bye!"
-exit 0
-</textarea>
 						</form>
 					</div>
 				</div>
@@ -408,6 +340,10 @@ exit 0
 									<label for="lastname" class="col-sm-2 control-label">Cron<font color="red">*</font></label>
 									<div class="col-sm-4"><input type="text" class="form-control" name="schedule_conf_CRON" placeholder="${I18n.system_please_input}Cron" maxlength="128" ></div>
 								</div>
+								<div class="schedule_conf schedule_conf_CRON" >
+									<label for="lastname" class="col-sm-2 control-label">${I18n.jobinfo_field_timezone}</label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="scheduleTimezone" list="timezoneList" placeholder="${I18n.jobinfo_field_timezone_placeholder}：${DefaultTimezone}" maxlength="64" autocomplete="off" ></div>
+								</div>
 								<div class="schedule_conf schedule_conf_FIX_RATE" style="display: none" >
 									<label for="lastname" class="col-sm-2 control-label">${I18n.schedule_type_fix_rate}<font color="red">*</font></label>
 									<div class="col-sm-4"><input type="text" class="form-control" name="schedule_conf_FIX_RATE" placeholder="${I18n.system_please_input} （ Second ）" maxlength="10" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
@@ -422,22 +358,63 @@ exit 0
 							<p style="margin: 0 0 10px;text-align: left;border-bottom: 1px solid #e5e5e5;color: gray;">${I18n.jobinfo_conf_job}</p>    <#-- 任务配置 -->
 
 							<div class="form-group">
-								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_gluetype}<font color="red">*</font></label>
+								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_invoketype}<font color="red">*</font></label>
 								<div class="col-sm-4">
-									<select class="form-control glueType" name="glueType" disabled >
-										<#list GlueTypeEnum as item>
-											<option value="${item}" >${item.desc}</option>
-										</#list>
+									<select class="form-control invokeType" name="invokeType" >
+										<option value="BEAN" selected>${I18n.jobinfo_invoketype_bean}</option>
+										<option value="HTTP">${I18n.jobinfo_invoketype_http}</option>
 									</select>
 								</div>
-								<label for="firstname" class="col-sm-2 control-label">JobHandler<font color="red">*</font></label>
-								<div class="col-sm-4"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
+								<label for="firstname" class="col-sm-2 control-label invoke_conf invoke_conf_BEAN">JobHandler<font color="red">*</font></label>
+								<div class="col-sm-4 invoke_conf invoke_conf_BEAN"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
 							</div>
 
-							<div class="form-group">
+							<div class="form-group invoke_conf invoke_conf_BEAN">
 								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_executorparam}<font color="black">*</font></label>
 								<div class="col-sm-10">
 									<textarea class="textarea form-control" name="executorParam" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_executorparam}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+								</div>
+							</div>
+
+							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_method" >
+											<option value="POST">POST</option>
+											<option value="GET">GET</option>
+											<option value="PUT">PUT</option>
+											<option value="DELETE">DELETE</option>
+											<option value="HEAD">HEAD</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_contenttype}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_contentType" >
+											<option value="application/json">JSON</option>
+											<option value="application/x-www-form-urlencoded">Form</option>
+											<option value="text/plain">Text</option>
+											<option value="application/xml">XML</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_timeout}</label>
+									<div class="col-sm-2"><input type="text" class="form-control" name="http_timeout" value="30" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_headers}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_headers" placeholder="${I18n.jobinfo_http_headers_placeholder} ${r"${ENV_NAME}"}" maxlength="2048" style="height: 60px; line-height: 1.2;"></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_body}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_body" placeholder="${I18n.system_please_input}${I18n.jobinfo_http_body}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+									</div>
 								</div>
 							</div>
 
@@ -642,32 +619,26 @@ exit 0
 					width: '15',
 					widthUnit: '%',
 					formatter: function(value, row, index) {
+						let text = row.scheduleType;
 						if (row.scheduleConf) {
-							return row.scheduleType + '：'+ row.scheduleConf;
-						} else {
-							return row.scheduleType;
+							text += '：' + row.scheduleConf;
 						}
+						if (row.scheduleType == 'CRON' && row.scheduleTimezone) {
+							text += '<br><small style="color: gray;">' + row.scheduleTimezone + '</small>';
+						}
+						return text;
 					}
 				},{
-					title: I18n.jobinfo_field_gluetype,
-					field: 'glueType',
+					title: 'JobHandler',
+					field: 'executorHandler',
 					width: '25',
 					widthUnit: '%',
 					formatter: function(value, row, index) {
-						// find glueType title
-						let glueTypeTitle = '';
-						$("#addModal .form select[name=glueType] option").each(function () {
-							if (row.glueType == $(this).val()) {
-								glueTypeTitle = $(this).text();
-							}
-						});
-
-						// append handler
-						if (row.executorHandler) {
-							return glueTypeTitle +"：" + row.executorHandler;
-						} else {
-							return glueTypeTitle;
+						if (row.executorHandler == HTTP_JOB_HANDLER) {
+							var p = parseHttpParam(row.executorParam);
+							return '<span class="label label-primary">HTTP</span> ' + (p ? ($('<div/>').text((p.method||'POST') + ' ' + (p.url||'')).html()) : '');
 						}
+						return row.executorHandler ? $('<div/>').text(row.executorHandler).html() : '';
 					}
 				},{
 					title: I18n.system_status,
@@ -964,34 +935,6 @@ exit 0
 			openTab(url, I18n.joblog_name, false);
 		});
 
-		// ---------------------- glue_ide ----------------------
-
-		/**
-		 * glue_ide
-		 */
-		$("#data_operation").on('click', '.glue_ide',function() {
-			// get select rows
-			var rows = $.adminTable.table.bootstrapTable('getSelections');
-
-			// find select row
-			if (rows.length !== 1) {
-				layer.msg(I18n.system_please_choose + I18n.system_one + I18n.system_data);
-				return;
-			}
-			var row = rows[0];
-
-			// valid
-			if ('BEAN' === row.glueType) {
-				layer.msg(I18n.jobinfo_glue_gluetype_invalid);
-				return;
-			}
-
-			// open tab
-			let url = base_url +'/jobcode?jobId='+ row.id;
-			window.open(url);
-			//openTab(url, 'GLUE IDE', false);
-		});
-
 		// ---------------------- job_next_time ----------------------
 
 		/**
@@ -1014,7 +957,8 @@ exit 0
 				url : base_url + "/jobinfo/nextTriggerTime",
 				data : {
 					"scheduleType" : row.scheduleType,
-					"scheduleConf" : row.scheduleConf
+					"scheduleConf" : row.scheduleConf,
+					"scheduleTimezone" : row.scheduleTimezone
 				},
 				dataType : "json",
 				success : function(data){
@@ -1078,8 +1022,9 @@ exit 0
 				// 》init scheduleType
 				$("#addModal .form select[name=scheduleType]").change();
 
-				// 》init glueType
-				$("#addModal .form select[name=glueType]").change();
+				// 》init invokeType
+				applyInvokeType($("#addModal .form"), null);
+
 			},
 			readFormData: function() {
 
@@ -1107,7 +1052,82 @@ exit 0
 				}
 				$("#addModal .form input[name='scheduleConf']").val( scheduleConf );
 
+				// process invoke type
+				prepareInvokeParam($("#addModal .form"));
+
 				return $("#addModal .form").serialize();
+			}
+		});
+
+		// ---------------------- invoke type (BEAN / HTTP) ----------------------
+		var HTTP_JOB_HANDLER = 'httpJobHandler';
+
+		function parseHttpParam(param) {
+			if (!param) { return null; }
+			try { var p = JSON.parse(param); return (p && typeof p === 'object') ? p : null; } catch (e) { return null; }
+		}
+
+		// build executorParam JSON from the HTTP form fields of a modal
+		function buildHttpParam($form) {
+			var headers = {};
+			$.each(($form.find("textarea[name='http_headers']").val() || '').split(/\r?\n/), function (i, line) {
+				var idx = line.indexOf(':');
+				if (idx > 0) {
+					var k = line.substring(0, idx).trim(), v = line.substring(idx + 1).trim();
+					if (k) { headers[k] = v; }
+				}
+			});
+			var timeout = parseInt($form.find("input[name='http_timeout']").val(), 10);
+			var param = {
+				url: ($form.find("input[name='http_url']").val() || '').trim(),
+				method: $form.find("select[name='http_method']").val(),
+				contentType: $form.find("select[name='http_contentType']").val(),
+				timeout: isNaN(timeout) ? 30 : timeout
+			};
+			if (!$.isEmptyObject(headers)) { param.headers = headers; }
+			var body = $form.find("textarea[name='http_body']").val();
+			if (body) { param.data = body; }
+			return JSON.stringify(param);
+		}
+
+		// fill the HTTP form fields of a modal from executorParam JSON
+		function fillHttpForm($form, executorParam) {
+			var p = parseHttpParam(executorParam) || {};
+			$form.find("input[name='http_url']").val(p.url || '');
+			$form.find("select[name='http_method']").val(p.method || 'POST');
+			$form.find("select[name='http_contentType']").val(p.contentType || 'application/json');
+			$form.find("input[name='http_timeout']").val(p.timeout || 30);
+			var lines = [];
+			if (p.headers) { $.each(p.headers, function (k, v) { lines.push(k + ': ' + v); }); }
+			$form.find("textarea[name='http_headers']").val(lines.join('\n'));
+			$form.find("textarea[name='http_body']").val(p.data || '');
+		}
+
+		// select invoke type of a modal according to a job row, then refresh the form
+		function applyInvokeType($form, row) {
+			var isHttp = row && row.executorHandler == HTTP_JOB_HANDLER;
+			$form.find("select[name='invokeType']").val(isHttp ? 'HTTP' : 'BEAN');
+			if (isHttp) { fillHttpForm($form, row.executorParam); } else { fillHttpForm($form, null); }
+			$form.find("select[name='invokeType']").change();
+		}
+
+		// before submit: for HTTP jobs, fix executorHandler and serialize the HTTP form into executorParam
+		function prepareInvokeParam($form) {
+			if ($form.find("select[name='invokeType']").val() == 'HTTP') {
+				$form.find("input[name='executorHandler']").val(HTTP_JOB_HANDLER);
+				$form.find("textarea[name='executorParam']").val(buildHttpParam($form));
+			}
+		}
+
+		$(".invokeType").change(function(){
+			var invokeType = $(this).val();
+			var $form = $(this).parents("form");
+			$form.find(".invoke_conf").hide();
+			$form.find(".invoke_conf_" + invokeType).show();
+			if (invokeType == 'HTTP') {
+				$form.find("input[name='executorHandler']").val(HTTP_JOB_HANDLER);
+			} else if ($form.find("input[name='executorHandler']").val() == HTTP_JOB_HANDLER) {
+				$form.find("input[name='executorHandler']").val('');
 			}
 		});
 
@@ -1117,42 +1137,6 @@ exit 0
 			$(this).parents("form").find(".schedule_conf").hide();
 			$(this).parents("form").find(".schedule_conf_" + scheduleType).show();
 
-		});
-
-		// glueType change
-		$(".glueType").change(function(){
-			// executorHandler
-			var $executorHandler = $(this).parents("form").find("input[name='executorHandler']");
-			var glueType = $(this).val();
-			if ('BEAN' != glueType) {
-				$executorHandler.val("");
-				$executorHandler.attr("readonly","readonly");
-			} else {
-				$executorHandler.removeAttr("readonly");
-			}
-		});
-
-		// glueType init source
-		$("#addModal .glueType").change(function(){
-			// glueSource
-			var glueType = $(this).val();
-			if ('GLUE_GROOVY'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_java").val() );
-			} else if ('GLUE_SHELL'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_shell").val() );
-			} else if ('GLUE_PYTHON'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_python").val() );
-			} else if ('GLUE_PYTHON2'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_python2").val() );
-			} else if ('GLUE_PHP'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_php").val() );
-			} else if ('GLUE_NODEJS'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_nodejs").val() );
-			} else if ('GLUE_POWERSHELL'==glueType){
-				$("#addModal .form textarea[name='glueSource']").val( $("#addModal .form .glueSource_powershell").val() );
-			} else {
-				$("#addModal .form textarea[name='glueSource']").val("");
-			}
 		});
 
 		// ---------------------- update ----------------------
@@ -1191,6 +1175,7 @@ exit 0
 				// fill trigger
 				$('#updateModal .form select[name=scheduleType] option[value='+ row.scheduleType +']').prop('selected', true);
 				$("#updateModal .form input[name='scheduleConf']").val( row.scheduleConf );
+				$("#updateModal .form input[name='scheduleTimezone']").val( row.scheduleTimezone ? row.scheduleTimezone : '' );
 				if (row.scheduleType == 'CRON') {
 					$("#updateModal .form input[name='schedule_conf_CRON']").val( row.scheduleConf );
 				} else if (row.scheduleType == 'FIX_RATE') {
@@ -1203,12 +1188,10 @@ exit 0
 				$("#updateModal .form select[name=scheduleType]").change();
 
 				// fill job
-				$('#updateModal .form select[name=glueType] option[value='+ row.glueType +']').prop('selected', true);
 				$("#updateModal .form input[name='executorHandler']").val( row.executorHandler );
 				$("#updateModal .form textarea[name='executorParam']").val( row.executorParam );
+				applyInvokeType($("#updateModal .form"), row);
 
-				// 》init glueType
-				$("#updateModal .form select[name=glueType]").change();
 
 				// 》init-cronGen
 				$("#updateModal .form input[name='schedule_conf_CRON']").show().siblings().remove();
@@ -1250,6 +1233,9 @@ exit 0
 				}
 				$("#updateModal .form input[name='scheduleConf']").val( scheduleConf );
 
+				// process invoke type
+				prepareInvokeParam($("#updateModal .form"));
+
 				return $("#updateModal .form").serialize();
 			}
 		});
@@ -1282,6 +1268,7 @@ exit 0
 			// fill trigger
 			$('#addModal .form select[name=scheduleType] option[value='+ row.scheduleType +']').prop('selected', true);
 			$("#addModal .form input[name='scheduleConf']").val( row.scheduleConf );
+			$("#addModal .form input[name='scheduleTimezone']").val( row.scheduleTimezone ? row.scheduleTimezone : '' );
 			if (row.scheduleType == 'CRON') {
 				$("#addModal .form input[name='schedule_conf_CRON']").val( row.scheduleConf );
 			} else if (row.scheduleType == 'FIX_RATE') {
@@ -1294,12 +1281,10 @@ exit 0
 			$("#addModal .form select[name=scheduleType]").change();
 
 			// fill job
-			$('#addModal .form select[name=glueType] option[value='+ row.glueType +']').prop('selected', true);
 			$("#addModal .form input[name='executorHandler']").val( row.executorHandler );
 			$("#addModal .form textarea[name='executorParam']").val( row.executorParam );
+			applyInvokeType($("#addModal .form"), row);
 
-			// 》init glueType
-			$("#addModal .form select[name=glueType]").change();
 
 			// 》init-cronGen
 			$("#addModal .form input[name='schedule_conf_CRON']").show().siblings().remove();

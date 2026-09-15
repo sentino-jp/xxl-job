@@ -49,8 +49,12 @@ public class XxlJobConfig {
     @Value("${xxl.job.executor.excludedpackage}")
     private String excludedPackage;
 
-    @Value("${xxl.job.executor.glueenabled:true}")
-    private Boolean glueEnabled;
+    @Value("${xxl.job.executor.httpjob.enabled:true}")
+    private boolean httpJobEnabled;
+
+    @Value("${xxl.job.executor.httpjob.allowdomains:}")
+    private String httpJobAllowDomains;
+
 
     @Bean
     public XxlJobSpringExecutor xxlJobExecutor() {
@@ -67,7 +71,8 @@ public class XxlJobConfig {
         xxlJobSpringExecutor.setLogPath(logPath);
         xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
         xxlJobSpringExecutor.setExcludedPackage(excludedPackage);
-        xxlJobSpringExecutor.setGlueEnabled(glueEnabled);
+        xxlJobSpringExecutor.setHttpJobEnabled(httpJobEnabled);
+        xxlJobSpringExecutor.setHttpJobAllowDomains(httpJobAllowDomains);
 
         return xxlJobSpringExecutor;
     }
