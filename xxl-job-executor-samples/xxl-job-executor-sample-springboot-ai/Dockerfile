@@ -17,5 +17,5 @@ ADD target/xxl-job-executor-sample-springboot-ai*.jar /app.jar
 # command
 # log home: -e LOG_HOME=/data/applogs
 # jvm options: -e JAVA_OPTS="-Xms128m -Xmx128m"
-# app params: -e PARAMS="--server.port=8080"
+# app params: -e PARAMS="--server.port=8081"
 ENTRYPOINT ["sh","-c","java ${LOG_HOME:+-DLOG_HOME=$LOG_HOME} -jar $JAVA_OPTS /app.jar $PARAMS"]
