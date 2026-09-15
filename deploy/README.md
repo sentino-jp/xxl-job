@@ -5,7 +5,8 @@
 | 项目 | 值 |
 |---|---|
 | 调度中心服务端口 | **9280**（`SERVER_PORT`，避开 8080/8081 等已占用端口） |
-| 调度中心内网域名 | **http://xxl-job.internal.sentino.jp**，由 Internal Gateway（api-gateway/infra）反代到两台调度中心 |
+| 调度中心内网域名 | **http://xxl-job.internal.sentino.jp**，由 Internal Gateway（api-gateway/infra）反代到三台调度中心 |
+| 调度中心节点 | 与 coucou-server 同机：10.0.0.100 / 10.0.0.194 / 10.0.0.228（私网），系统用户 ubuntu，目录 /data/xxl-job-admin |
 | 执行器内嵌端口 | 9999（`XXL_JOB_EXECUTOR_PORT`，可改） |
 | 数据库 | PostgreSQL，独立库 `xxl_job`、独立账号 `xxl_job` |
 
@@ -37,7 +38,7 @@ application.properties 里的环境相关项全部是 `${ENV:默认值}` 占位�
    address=/xxl-job.internal.sentino.jp/127.0.0.1
    ```
 
-2. 把本仓库 `deploy/gateway/xxl-job.conf` 复制为 `nginx/conf.d/xxl-job.conf`，把 upstream 里两台调度中心的私网 IP 改成实际值（端口 9280）。
+2. 把本仓库 `deploy/gateway/xxl-job.conf` 复制为 `nginx/conf.d/xxl-job.conf`。upstream 已写好三台节点 10.0.0.100 / 10.0.0.194 / 10.0.0.228 的 9280，与网关里 agent.conf 反代的是同一批机器。
 3. 网关机上部署并验证：
 
    ```bash
@@ -49,7 +50,7 @@ application.properties 里的环境相关项全部是 `${ENV:默认值}` 占位�
 
    此时调度中心还没起来，curl 会返回 502，等第 4 步之后再验。
 
-4. 安全组：放通网关机到两台调度中心节点的 9280；放通执行器节点到网关机 80（已有）；放通两台调度中心到各执行器节点的 9999。
+4. 安全组：放通网关机到三台节点的 9280（网关到这三台的 8081 已放通，同一批机器再加一个端口）；放通执行器节点到网关机 80（已有）；放通三台调度中心到各执行器节点的 9999。
 
 ### 第 2 步：数据库
 
@@ -75,7 +76,7 @@ mvn -pl xxl-job-admin,xxl-job-executor-http -am package -Dmaven.test.skip=true
 
 业务服务作为执行器需要 `xxl-job-core`：发到团队私有 Maven 仓库，或在各构建机 `mvn -pl xxl-job-core -am install`。建议把版本号从 SNAPSHOT 改为正式号再发布。
 
-### 第 4 步：调度中心节点（两台，逐台）
+### 第 4 步：调度中心节点（三台，逐台）
 
 准备 `.env`：以 `xxl-job-admin/.env.example` 为模板，按环境填好。生产至少这些项：
 
@@ -91,7 +92,7 @@ XXL_JOB_LARK_ENV=prod
 XXL_JOB_LARK_ADMIN_URL=http://xxl-job.internal.sentino.jp
 ```
 
-两台节点的 `.env` 内容完全相同。然后：
+三台节点的 `.env` 内容完全相同。然后：
 
 ```bash
 sudo mkdir -p /data/xxl-job-admin/logs && sudo chown -R ubuntu:ubuntu /data/xxl-job-admin
@@ -108,7 +109,7 @@ journalctl -u xxl-job-admin -f      # 看到 "Started XxlJobAdminApplication" �
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9280/auth/login   # 200
 ```
 
-第二台重复以上步骤。两台靠数据库锁互斥，同一时刻只有一台在调度，另一台热备；节点时钟必须 NTP 同步。
+其余两台重复以上步骤。三台靠数据库锁互斥，同一时刻只有一台在调度，其余热备；节点时钟必须 NTP 同步（coucou-server 已在这三台跑 systemd，时钟与目录规范可直接沿用）。
 
 回到网关机验证域名：
 
@@ -138,7 +139,7 @@ XXL_JOB_EXECUTOR_ADDRESS=http://<本机私网IP>:9999/
 XXL_JOB_HTTPJOB_ALLOWDOMAINS=.sentino.jp,api.coucou.fun,10.0.1.34:9082
 ```
 
-`XXL_JOB_HTTPJOB_ALLOWDOMAINS` 生产必填，否则该执行器可以请求任意地址。若担心网关机单点，可写成 `http://xxl-job.internal.sentino.jp,http://<调度中心A私网IP>:9280,http://<调度中心B私网IP>:9280`，执行器按顺序尝试。
+`XXL_JOB_HTTPJOB_ALLOWDOMAINS` 生产必填，否则该执行器可以请求任意地址。若担心网关机单点，可写成 `http://xxl-job.internal.sentino.jp,http://10.0.0.100:9280,http://10.0.0.194:9280,http://10.0.0.228:9280`，执行器按顺序尝试。
 
 ```bash
 sudo mkdir -p /data/xxl-job-executor-http/logs && sudo chown -R ubuntu:ubuntu /data/xxl-job-executor-http
@@ -176,7 +177,7 @@ ssh ubuntu@<node> 'chmod 600 /data/xxl-job-executor-http/.env && sudo mv /tmp/xx
 
 ## 三、版本升级
 
-调度中心与执行器里的 xxl-job-core 协议已变，两者必须同版本升级，顺序：数据库迁移 → 调度中心（两台滚动）→ 执行器。
+调度中心与执行器里的 xxl-job-core 协议已变，两者必须同版本升级，顺序：数据库迁移 → 调度中心（三台滚动）→ 执行器。
 
 ```bash
 scp xxl-job-admin-<新版本>.jar ubuntu@<node>:/data/xxl-job-admin/xxl-job-admin.jar.new
@@ -184,9 +185,9 @@ ssh ubuntu@<node> 'cd /data/xxl-job-admin && cp xxl-job-admin.jar xxl-job-admin.
 journalctl -u xxl-job-admin -n 50 --no-pager
 ```
 
-**不要在进程运行时原地覆盖 jar。** JVM 按需加载类，被覆盖后会出现 NoClassDefFoundError 与页面找不到。先写 `.jar.new` 再重命名，紧接着重启。一台确认正常后再做第二台，期间由另一台接管调度。
+**不要在进程运行时原地覆盖 jar。** JVM 按需加载类，被覆盖后会出现 NoClassDefFoundError 与页面找不到。先写 `.jar.new` 再重命名，紧接着重启。一台确认正常后再做下一台，期间由其余节点接管调度。
 
-`.env` 变更同样是改文件后 `sudo systemctl restart xxl-job-admin`，两台滚动。
+`.env` 变更同样是改文件后 `sudo systemctl restart xxl-job-admin`，三台滚动。
 
 ## 四、回滚
 
