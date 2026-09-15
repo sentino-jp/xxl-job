@@ -1,0 +1,22 @@
+[Unit]
+Description=XXL-JOB generic HTTP executor
+Documentation=https://github.com/sentino-jp/xxl-job
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/data/xxl-job-executor-http
+EnvironmentFile=/data/xxl-job-executor-http/.env
+ExecStart=/bin/bash -lc 'exec java ${JAVA_OPTS:--Xms128m -Xmx256m} -jar /data/xxl-job-executor-http/xxl-job-executor-http.jar'
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+# executor waits for running jobs (graceful shutdown) before exiting
+TimeoutStopSec=60
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

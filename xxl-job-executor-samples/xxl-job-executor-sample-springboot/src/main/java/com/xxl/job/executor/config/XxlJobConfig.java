@@ -49,6 +49,12 @@ public class XxlJobConfig {
     @Value("${xxl.job.executor.excludedpackage}")
     private String excludedPackage;
 
+    @Value("${xxl.job.executor.httpjob.enabled:true}")
+    private boolean httpJobEnabled;
+
+    @Value("${xxl.job.executor.httpjob.allowdomains:}")
+    private String httpJobAllowDomains;
+
 
 
     @Bean
@@ -66,6 +72,8 @@ public class XxlJobConfig {
         xxlJobSpringExecutor.setLogPath(logPath);
         xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
         xxlJobSpringExecutor.setExcludedPackage(excludedPackage);
+        xxlJobSpringExecutor.setHttpJobEnabled(httpJobEnabled);
+        xxlJobSpringExecutor.setHttpJobAllowDomains(httpJobAllowDomains);
 
         return xxlJobSpringExecutor;
     }

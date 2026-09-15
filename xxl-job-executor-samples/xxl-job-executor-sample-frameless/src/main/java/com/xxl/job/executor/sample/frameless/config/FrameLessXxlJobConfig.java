@@ -44,6 +44,8 @@ public class FrameLessXxlJobConfig {
         xxlJobExecutor.setAddress(xxlJobProp.getProperty("xxl.job.executor.address"));
         xxlJobExecutor.setLogPath(xxlJobProp.getProperty("xxl.job.executor.logpath"));
         xxlJobExecutor.setLogRetentionDays(Integer.parseInt(xxlJobProp.getProperty("xxl.job.executor.logretentiondays")));
+        xxlJobExecutor.setHttpJobEnabled(Boolean.parseBoolean(xxlJobProp.getProperty("xxl.job.executor.httpjob.enabled", "true")));
+        xxlJobExecutor.setHttpJobAllowDomains(xxlJobProp.getProperty("xxl.job.executor.httpjob.allowdomains", ""));
 
         // registry job bean
         xxlJobExecutor.setXxlJobBeanList(List.of(new SampleXxlJob()));

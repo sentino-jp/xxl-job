@@ -1,0 +1,24 @@
+[Unit]
+Description=XXL-JOB Admin (scheduler center)
+Documentation=https://github.com/sentino-jp/xxl-job
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/data/xxl-job-admin
+# all secrets and environment-specific values live here (chmod 600, never committed)
+EnvironmentFile=/data/xxl-job-admin/.env
+# JAVA_OPTS / SERVER_PORT / SPRING_* / XXL_JOB_LARK_* / LOG_HOME are read from the env file
+ExecStart=/bin/bash -lc 'exec java ${JAVA_OPTS:--Xms512m -Xmx1g} -jar /data/xxl-job-admin/xxl-job-admin.jar'
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+# let running triggers finish; the scheduler waits for the time-ring to drain on shutdown
+TimeoutStopSec=60
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

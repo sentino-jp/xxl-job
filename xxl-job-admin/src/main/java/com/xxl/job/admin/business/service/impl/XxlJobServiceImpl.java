@@ -16,6 +16,7 @@ import com.xxl.job.admin.business.service.XxlJobService;
 import com.xxl.job.admin.framework.util.I18nUtil;
 import com.xxl.job.admin.framework.util.JobGroupPermissionUtil;
 import com.xxl.job.core.constant.ExecutorBlockStrategyEnum;
+import com.xxl.job.core.handler.http.HttpJobHandler;
 import com.xxl.sso.core.model.LoginInfo;
 import com.xxl.tool.core.DateTool;
 import com.xxl.tool.core.StringTool;
@@ -115,6 +116,14 @@ public class XxlJobServiceImpl implements XxlJobService {
 		// valid job
 		if (StringTool.isBlank(jobInfo.getExecutorHandler())) {
 			return Response.ofFail ( (I18nUtil.getString("system_please_input")+"JobHandler") );
+		}
+
+		// valid http job param (built-in httpJobHandler)
+		if (jobInfo.getExecutorHandler() != null && HttpJobHandler.HANDLER_NAME.equals(jobInfo.getExecutorHandler().trim())) {
+			String httpParamError = HttpJobHandler.validParam(jobInfo.getExecutorParam());
+			if (httpParamError != null) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_http_param")+I18nUtil.getString("system_invalid")) + ": " + httpParamError );
+			}
 		}
 
 		// valid advanced
@@ -225,6 +234,14 @@ public class XxlJobServiceImpl implements XxlJobService {
 				}
 			} catch (Exception e) {
 				return Response.ofFail ( (I18nUtil.getString("schedule_type")+I18nUtil.getString("system_invalid")) );
+			}
+		}
+
+		// valid http job param (built-in httpJobHandler)
+		if (jobInfo.getExecutorHandler() != null && HttpJobHandler.HANDLER_NAME.equals(jobInfo.getExecutorHandler().trim())) {
+			String httpParamError = HttpJobHandler.validParam(jobInfo.getExecutorParam());
+			if (httpParamError != null) {
+				return Response.ofFail ( (I18nUtil.getString("jobinfo_http_param")+I18nUtil.getString("system_invalid")) + ": " + httpParamError );
 			}
 		}
 

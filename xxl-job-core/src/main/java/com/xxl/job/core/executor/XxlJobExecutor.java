@@ -2,6 +2,7 @@ package com.xxl.job.core.executor;
 
 import com.xxl.job.core.constant.Const;
 import com.xxl.job.core.handler.IJobHandler;
+import com.xxl.job.core.handler.http.HttpJobHandler;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import com.xxl.job.core.handler.impl.MethodJobHandler;
 import com.xxl.job.core.log.XxlJobFileAppender;
@@ -20,6 +21,8 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,6 +59,8 @@ public class XxlJobExecutor  {
     private String address;                                         // executor registry-address: default use address to registry , otherwise use ip:port if address is null
     private String logPath = "/data/applogs/xxl-job/jobhandler";    // executor log-path
     private int logRetentionDays = 30;                              // executor log-retention-days
+    private boolean httpJobEnabled = true;                          // register built-in httpJobHandler, default true
+    private String httpJobAllowDomains;                             // allowed target hosts of built-in httpJobHandler, comma separated; empty = allow all
 
     public void setAdminAddresses(String adminAddresses) {
         this.adminAddresses = adminAddresses;
@@ -86,6 +91,12 @@ public class XxlJobExecutor  {
     }
     public void setLogRetentionDays(int logRetentionDays) {
         this.logRetentionDays = logRetentionDays;
+    }
+    public void setHttpJobEnabled(boolean httpJobEnabled) {
+        this.httpJobEnabled = httpJobEnabled;
+    }
+    public void setHttpJobAllowDomains(String httpJobAllowDomains) {
+        this.httpJobAllowDomains = httpJobAllowDomains;
     }
 
     public String getAppname() {
@@ -145,6 +156,9 @@ public class XxlJobExecutor  {
 
         // init invoker, admin-client
         initAdminBizList();
+
+        // init built-in job handlers
+        registryBuiltinJobHandlers();
 
         // 1、init JobLogFileCleanThread
         jobLogFileCleanThreadHelper = new JobLogFileCleanThreadHelper();
@@ -316,6 +330,24 @@ public class XxlJobExecutor  {
     public IJobHandler registryJobHandler(String name, IJobHandler jobHandler){
         logger.info(">>>>>>>>>>> xxl-job register jobhandler success, name:{}, jobHandler:{}", name, jobHandler);
         return jobHandlerRepository.put(name, jobHandler);
+    }
+
+    /**
+     * registry built-in JobHandlers (httpJobHandler); a business handler with the same name takes precedence
+     */
+    private void registryBuiltinJobHandlers() {
+        if (!httpJobEnabled) {
+            logger.info(">>>>>>>>>>> xxl-job built-in {} disabled.", HttpJobHandler.HANDLER_NAME);
+            return;
+        }
+        if (loadJobHandler(HttpJobHandler.HANDLER_NAME) != null) {
+            logger.info(">>>>>>>>>>> xxl-job built-in {} skipped, a custom handler with the same name exists.", HttpJobHandler.HANDLER_NAME);
+            return;
+        }
+        List<String> allowDomains = StringTool.isNotBlank(httpJobAllowDomains)
+                ? Arrays.asList(httpJobAllowDomains.split(","))
+                : Collections.emptyList();
+        registryJobHandler(HttpJobHandler.HANDLER_NAME, new HttpJobHandler(allowDomains));
     }
 
     /**

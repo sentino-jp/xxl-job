@@ -1,4 +1,4 @@
-package com.xxl.job.executor.config;
+package com.xxl.job.executor.http.config;
 
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
 import org.slf4j.Logger;
@@ -8,9 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * xxl-job config
- *
- * @author xuxueli 2017-04-28
+ * xxl-job executor config for the generic HTTP executor
  */
 @Configuration
 public class XxlJobConfig {
@@ -19,11 +17,11 @@ public class XxlJobConfig {
     @Value("${xxl.job.admin.addresses}")
     private String adminAddresses;
 
-    @Value("${xxl.job.admin.timeout}")
+    @Value("${xxl.job.admin.timeout:3}")
     private int timeout;
 
-    @Value("${xxl.job.executor.enabled}")
-    private Boolean enabled;
+    @Value("${xxl.job.executor.enabled:true}")
+    private boolean enabled;
 
     @Value("${xxl.job.executor.appname}")
     private String appname;
@@ -31,34 +29,27 @@ public class XxlJobConfig {
     @Value("${xxl.job.executor.accessToken}")
     private String accessToken;
 
-    @Value("${xxl.job.executor.ip}")
+    @Value("${xxl.job.executor.ip:}")
     private String ip;
 
-    @Value("${xxl.job.executor.port}")
+    @Value("${xxl.job.executor.port:9999}")
     private int port;
 
-    @Value("${xxl.job.executor.address}")
+    @Value("${xxl.job.executor.address:}")
     private String address;
 
     @Value("${xxl.job.executor.logpath}")
     private String logPath;
 
-    @Value("${xxl.job.executor.logretentiondays}")
+    @Value("${xxl.job.executor.logretentiondays:30}")
     private int logRetentionDays;
-
-    @Value("${xxl.job.executor.excludedpackage}")
-    private String excludedPackage;
-
-    @Value("${xxl.job.executor.httpjob.enabled:true}")
-    private boolean httpJobEnabled;
 
     @Value("${xxl.job.executor.httpjob.allowdomains:}")
     private String httpJobAllowDomains;
 
-
     @Bean
     public XxlJobSpringExecutor xxlJobExecutor() {
-        logger.info(">>>>>>>>>>> xxl-job config init.");
+        logger.info(">>>>>>>>>>> xxl-job http executor config init.");
         XxlJobSpringExecutor xxlJobSpringExecutor = new XxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);
         xxlJobSpringExecutor.setTimeout(timeout);
@@ -70,10 +61,9 @@ public class XxlJobConfig {
         xxlJobSpringExecutor.setAddress(address);
         xxlJobSpringExecutor.setLogPath(logPath);
         xxlJobSpringExecutor.setLogRetentionDays(logRetentionDays);
-        xxlJobSpringExecutor.setExcludedPackage(excludedPackage);
-        xxlJobSpringExecutor.setHttpJobEnabled(httpJobEnabled);
+        // this executor exists for the built-in http handler, so it is always enabled here
+        xxlJobSpringExecutor.setHttpJobEnabled(true);
         xxlJobSpringExecutor.setHttpJobAllowDomains(httpJobAllowDomains);
-
         return xxlJobSpringExecutor;
     }
 

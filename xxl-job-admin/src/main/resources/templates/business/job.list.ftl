@@ -172,14 +172,63 @@
 							<p style="margin: 0 0 10px;text-align: left;border-bottom: 1px solid #e5e5e5;color: gray;">${I18n.jobinfo_conf_job}</p>    <#-- 任务配置 -->
 
 							<div class="form-group">
-								<label for="firstname" class="col-sm-2 control-label">JobHandler<font color="red">*</font></label>
-								<div class="col-sm-10"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
+								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_invoketype}<font color="red">*</font></label>
+								<div class="col-sm-4">
+									<select class="form-control invokeType" name="invokeType" >
+										<option value="BEAN" selected>${I18n.jobinfo_invoketype_bean}</option>
+										<option value="HTTP">${I18n.jobinfo_invoketype_http}</option>
+									</select>
+								</div>
+								<label for="firstname" class="col-sm-2 control-label invoke_conf invoke_conf_BEAN">JobHandler<font color="red">*</font></label>
+								<div class="col-sm-4 invoke_conf invoke_conf_BEAN"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
 							</div>
 
-							<div class="form-group">
+							<div class="form-group invoke_conf invoke_conf_BEAN">
 								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_executorparam}<font color="black">*</font></label>
 								<div class="col-sm-10">
 									<textarea class="textarea form-control" name="executorParam" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_executorparam}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+								</div>
+							</div>
+
+							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_method" >
+											<option value="POST">POST</option>
+											<option value="GET">GET</option>
+											<option value="PUT">PUT</option>
+											<option value="DELETE">DELETE</option>
+											<option value="HEAD">HEAD</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_contenttype}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_contentType" >
+											<option value="application/json">JSON</option>
+											<option value="application/x-www-form-urlencoded">Form</option>
+											<option value="text/plain">Text</option>
+											<option value="application/xml">XML</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_timeout}</label>
+									<div class="col-sm-2"><input type="text" class="form-control" name="http_timeout" value="30" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_headers}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_headers" placeholder="${I18n.jobinfo_http_headers_placeholder} ${r"${ENV_NAME}"}" maxlength="2048" style="height: 60px; line-height: 1.2;"></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_body}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_body" placeholder="${I18n.system_please_input}${I18n.jobinfo_http_body}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+									</div>
 								</div>
 							</div>
 
@@ -309,14 +358,63 @@
 							<p style="margin: 0 0 10px;text-align: left;border-bottom: 1px solid #e5e5e5;color: gray;">${I18n.jobinfo_conf_job}</p>    <#-- 任务配置 -->
 
 							<div class="form-group">
-								<label for="firstname" class="col-sm-2 control-label">JobHandler<font color="red">*</font></label>
-								<div class="col-sm-10"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
+								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_invoketype}<font color="red">*</font></label>
+								<div class="col-sm-4">
+									<select class="form-control invokeType" name="invokeType" >
+										<option value="BEAN" selected>${I18n.jobinfo_invoketype_bean}</option>
+										<option value="HTTP">${I18n.jobinfo_invoketype_http}</option>
+									</select>
+								</div>
+								<label for="firstname" class="col-sm-2 control-label invoke_conf invoke_conf_BEAN">JobHandler<font color="red">*</font></label>
+								<div class="col-sm-4 invoke_conf invoke_conf_BEAN"><input type="text" class="form-control" name="executorHandler" placeholder="${I18n.system_please_input}JobHandler" maxlength="100" ></div>
 							</div>
 
-							<div class="form-group">
+							<div class="form-group invoke_conf invoke_conf_BEAN">
 								<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_field_executorparam}<font color="black">*</font></label>
 								<div class="col-sm-10">
 									<textarea class="textarea form-control" name="executorParam" placeholder="${I18n.system_please_input}${I18n.jobinfo_field_executorparam}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+								</div>
+							</div>
+
+							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
+									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_method" >
+											<option value="POST">POST</option>
+											<option value="GET">GET</option>
+											<option value="PUT">PUT</option>
+											<option value="DELETE">DELETE</option>
+											<option value="HEAD">HEAD</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_contenttype}</label>
+									<div class="col-sm-2">
+										<select class="form-control" name="http_contentType" >
+											<option value="application/json">JSON</option>
+											<option value="application/x-www-form-urlencoded">Form</option>
+											<option value="text/plain">Text</option>
+											<option value="application/xml">XML</option>
+										</select>
+									</div>
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_timeout}</label>
+									<div class="col-sm-2"><input type="text" class="form-control" name="http_timeout" value="30" maxlength="4" onkeyup="this.value=this.value.replace(/\D/g,'')" onafterpaste="this.value=this.value.replace(/\D/g,'')" ></div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_headers}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_headers" placeholder="${I18n.jobinfo_http_headers_placeholder} ${r"${ENV_NAME}"}" maxlength="2048" style="height: 60px; line-height: 1.2;"></textarea>
+									</div>
+								</div>
+								<div class="form-group">
+									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_body}</label>
+									<div class="col-sm-10">
+										<textarea class="textarea form-control" name="http_body" placeholder="${I18n.system_please_input}${I18n.jobinfo_http_body}" maxlength="2048" style="height: 70px; line-height: 1.2;"></textarea>
+									</div>
 								</div>
 							</div>
 
@@ -536,7 +634,11 @@
 					width: '25',
 					widthUnit: '%',
 					formatter: function(value, row, index) {
-						return row.executorHandler ? row.executorHandler : '';
+						if (row.executorHandler == HTTP_JOB_HANDLER) {
+							var p = parseHttpParam(row.executorParam);
+							return '<span class="label label-primary">HTTP</span> ' + (p ? ($('<div/>').text((p.method||'POST') + ' ' + (p.url||'')).html()) : '');
+						}
+						return row.executorHandler ? $('<div/>').text(row.executorHandler).html() : '';
 					}
 				},{
 					title: I18n.system_status,
@@ -920,6 +1022,9 @@
 				// 》init scheduleType
 				$("#addModal .form select[name=scheduleType]").change();
 
+				// 》init invokeType
+				applyInvokeType($("#addModal .form"), null);
+
 			},
 			readFormData: function() {
 
@@ -947,7 +1052,82 @@
 				}
 				$("#addModal .form input[name='scheduleConf']").val( scheduleConf );
 
+				// process invoke type
+				prepareInvokeParam($("#addModal .form"));
+
 				return $("#addModal .form").serialize();
+			}
+		});
+
+		// ---------------------- invoke type (BEAN / HTTP) ----------------------
+		var HTTP_JOB_HANDLER = 'httpJobHandler';
+
+		function parseHttpParam(param) {
+			if (!param) { return null; }
+			try { var p = JSON.parse(param); return (p && typeof p === 'object') ? p : null; } catch (e) { return null; }
+		}
+
+		// build executorParam JSON from the HTTP form fields of a modal
+		function buildHttpParam($form) {
+			var headers = {};
+			$.each(($form.find("textarea[name='http_headers']").val() || '').split(/\r?\n/), function (i, line) {
+				var idx = line.indexOf(':');
+				if (idx > 0) {
+					var k = line.substring(0, idx).trim(), v = line.substring(idx + 1).trim();
+					if (k) { headers[k] = v; }
+				}
+			});
+			var timeout = parseInt($form.find("input[name='http_timeout']").val(), 10);
+			var param = {
+				url: ($form.find("input[name='http_url']").val() || '').trim(),
+				method: $form.find("select[name='http_method']").val(),
+				contentType: $form.find("select[name='http_contentType']").val(),
+				timeout: isNaN(timeout) ? 30 : timeout
+			};
+			if (!$.isEmptyObject(headers)) { param.headers = headers; }
+			var body = $form.find("textarea[name='http_body']").val();
+			if (body) { param.data = body; }
+			return JSON.stringify(param);
+		}
+
+		// fill the HTTP form fields of a modal from executorParam JSON
+		function fillHttpForm($form, executorParam) {
+			var p = parseHttpParam(executorParam) || {};
+			$form.find("input[name='http_url']").val(p.url || '');
+			$form.find("select[name='http_method']").val(p.method || 'POST');
+			$form.find("select[name='http_contentType']").val(p.contentType || 'application/json');
+			$form.find("input[name='http_timeout']").val(p.timeout || 30);
+			var lines = [];
+			if (p.headers) { $.each(p.headers, function (k, v) { lines.push(k + ': ' + v); }); }
+			$form.find("textarea[name='http_headers']").val(lines.join('\n'));
+			$form.find("textarea[name='http_body']").val(p.data || '');
+		}
+
+		// select invoke type of a modal according to a job row, then refresh the form
+		function applyInvokeType($form, row) {
+			var isHttp = row && row.executorHandler == HTTP_JOB_HANDLER;
+			$form.find("select[name='invokeType']").val(isHttp ? 'HTTP' : 'BEAN');
+			if (isHttp) { fillHttpForm($form, row.executorParam); } else { fillHttpForm($form, null); }
+			$form.find("select[name='invokeType']").change();
+		}
+
+		// before submit: for HTTP jobs, fix executorHandler and serialize the HTTP form into executorParam
+		function prepareInvokeParam($form) {
+			if ($form.find("select[name='invokeType']").val() == 'HTTP') {
+				$form.find("input[name='executorHandler']").val(HTTP_JOB_HANDLER);
+				$form.find("textarea[name='executorParam']").val(buildHttpParam($form));
+			}
+		}
+
+		$(".invokeType").change(function(){
+			var invokeType = $(this).val();
+			var $form = $(this).parents("form");
+			$form.find(".invoke_conf").hide();
+			$form.find(".invoke_conf_" + invokeType).show();
+			if (invokeType == 'HTTP') {
+				$form.find("input[name='executorHandler']").val(HTTP_JOB_HANDLER);
+			} else if ($form.find("input[name='executorHandler']").val() == HTTP_JOB_HANDLER) {
+				$form.find("input[name='executorHandler']").val('');
 			}
 		});
 
@@ -1010,6 +1190,7 @@
 				// fill job
 				$("#updateModal .form input[name='executorHandler']").val( row.executorHandler );
 				$("#updateModal .form textarea[name='executorParam']").val( row.executorParam );
+				applyInvokeType($("#updateModal .form"), row);
 
 
 				// 》init-cronGen
@@ -1051,6 +1232,9 @@
 					scheduleConf = $("#updateModal .form input[name='schedule_conf_FIX_DELAY']").val();
 				}
 				$("#updateModal .form input[name='scheduleConf']").val( scheduleConf );
+
+				// process invoke type
+				prepareInvokeParam($("#updateModal .form"));
 
 				return $("#updateModal .form").serialize();
 			}
@@ -1099,6 +1283,7 @@
 			// fill job
 			$("#addModal .form input[name='executorHandler']").val( row.executorHandler );
 			$("#addModal .form textarea[name='executorParam']").val( row.executorParam );
+			applyInvokeType($("#addModal .form"), row);
 
 
 			// 》init-cronGen
