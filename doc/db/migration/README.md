@@ -4,7 +4,7 @@
 - `NNN_描述.sql`：**增量迁移**，只给已经初始化过的库用；每个脚本必须幂等（`IF NOT EXISTS` / `IF EXISTS` / `ON CONFLICT DO NOTHING`），单事务执行，出错整体回滚。
 - 执行记录写在 `xxl_job_schema_migration` 表，按文件名去重，重复执行无副作用。
 
-执行方式（先在一台调度中心节点或跳板机上，对同一个库只需执行一次）：
+执行方式（先在一台调度中心节点或跳板机上，对同一个库只需执行一次）。推荐用仓库根目录 `./init-db.sh --env=xxl-job-admin/.env --migrate-only`，会自动跳过已记录在 `xxl_job_schema_migration` 里的脚本；手工执行如下：
 
 ```bash
 psql -h <pg-host> -U xxl_job -d xxl_job -1 -v ON_ERROR_STOP=1 -f doc/db/migration/001_schedule_timezone_and_drop_glue.sql

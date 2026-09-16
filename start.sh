@@ -226,7 +226,7 @@ step_check_database() {
             log_error "PostgreSQL 未就绪: ${db_host}:${db_port}/${db_name}"
             if [ "$PROFILE" = "local" ]; then
                 log_error "本机请先执行: brew services start postgresql@14"
-                log_error "首次使用需建库并初始化: createdb xxl_job && psql -d xxl_job -f doc/db/tables_xxl_job.sql"
+                log_error "首次使用需建库并初始化: ./init-db.sh"
             fi
             exit 1
         fi
