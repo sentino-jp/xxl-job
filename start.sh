@@ -6,14 +6,14 @@
 # 用法: ./start.sh [--skip-compile] [--force] [--profile=<name>] [--env=<file>]
 #   --skip-compile   不重新 mvn package，直接用 target 下已有 jar
 #   --force          端口被占用时不询问，直接 kill 占用进程
-#   --profile=local  运行环境，默认 local；决定加载哪个 env 文件与内置默认值
+#   --profile=<name> 只认 xxl-job-admin/.env.<name>（.env.* 已 gitignore，可放本机/测试配置）
 #   --env=<file>     显式指定 env 文件（优先级最高）
 #
 # 配置全部走环境变量（见 xxl-job-admin/.env.example）。env 文件加载顺序：
 #   1) --env=<file>
-#   2) xxl-job-admin/.env.${PROFILE}        （.env.* 已 gitignore，可放本机/测试配置）
-#   3) 非 local profile 时回落 xxl-job-admin/.env（生产同名文件，慎用）
-#   local profile 找不到文件时使用内置默认值：本机 PostgreSQL 5432 / xxl_job 库 / 当前 OS 用户免密
+#   2) 显式 --profile=<name>（或 PROFILE 环境变量）→ xxl-job-admin/.env.<name>，不存在即报错
+#   3) 默认（不带参数）→ xxl-job-admin/.env，等价于 --env=xxl-job-admin/.env
+#   连 .env 都没有时使用内置默认值：本机 PostgreSQL 5432 / xxl_job 库 / 当前 OS 用户免密
 #
 # 注意: 数据库不由本脚本启动，本机请先 `brew services start postgresql@14`
 # ============================================
@@ -38,7 +38,8 @@ MAX_WAIT_TIME=90               # 等待健康检查的最大时间(秒)，本机
 RUN_DIR="local/run"            # pid 文件目录（/local/ 已 gitignore）
 LOG_DIR="local/logs"           # stdout 与 LOG_HOME 默认目录
 
-# 环境 Profile（默认 local）
+# 环境 Profile。默认不带参数时直接加载 xxl-job-admin/.env；只有显式给了 PROFILE / --profile 才去找 .env.<name>
+PROFILE_SET=false; [ -n "${PROFILE:-}" ] && PROFILE_SET=true
 PROFILE=${PROFILE:-local}
 ENV_FILE=""
 
@@ -144,11 +145,13 @@ step_load_env() {
     if [ -n "$ENV_FILE" ]; then
         candidate="$ENV_FILE"
         [ -f "$candidate" ] || { log_error "指定的 env 文件不存在: $candidate"; exit 1; }
-    elif [ -f "${ADMIN_MODULE}/.env.${PROFILE}" ]; then
+    elif [ "$PROFILE_SET" = true ]; then
+        # 显式指定了 --profile=<name>（或 PROFILE 环境变量）：只认 .env.<name>，不回落
         candidate="${ADMIN_MODULE}/.env.${PROFILE}"
-    elif [ "$PROFILE" != "local" ] && [ -f "${ADMIN_MODULE}/.env" ]; then
+        [ -f "$candidate" ] || { log_error "profile=$PROFILE 但找不到 $candidate"; exit 1; }
+    elif [ -f "${ADMIN_MODULE}/.env" ]; then
+        # 默认：等价于 --env=xxl-job-admin/.env
         candidate="${ADMIN_MODULE}/.env"
-        log_warning "未找到 ${ADMIN_MODULE}/.env.${PROFILE}，回落到 ${ADMIN_MODULE}/.env（该文件通常是生产配置）"
     fi
 
     if [ -n "$candidate" ]; then
@@ -157,11 +160,8 @@ step_load_env() {
         # shellcheck disable=SC1090
         . "$candidate"
         set +a
-    elif [ "$PROFILE" = "local" ]; then
-        log_info "未找到 ${ADMIN_MODULE}/.env.local，使用内置本机默认值（不会加载 ${ADMIN_MODULE}/.env）"
     else
-        log_error "profile=$PROFILE 但找不到任何 env 文件（${ADMIN_MODULE}/.env.${PROFILE} 或 ${ADMIN_MODULE}/.env）"
-        exit 1
+        log_info "未找到 ${ADMIN_MODULE}/.env，使用内置本机默认值（本机 PostgreSQL 5432 / 当前 OS 用户免密）"
     fi
 
     # 内置默认值：env 文件未给的项按本机联调习惯补齐
@@ -364,7 +364,7 @@ main() {
                 SKIP_COMPILE=true
                 ;;
             --profile=*)
-                PROFILE="${arg#*=}"
+                PROFILE="${arg#*=}"; PROFILE_SET=true
                 ;;
             --env=*)
                 ENV_FILE="${arg#*=}"
