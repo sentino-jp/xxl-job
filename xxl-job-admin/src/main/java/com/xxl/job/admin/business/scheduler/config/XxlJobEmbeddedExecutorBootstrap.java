@@ -40,7 +40,7 @@ public class XxlJobEmbeddedExecutorBootstrap {
     @Value("${xxl.job.executor.admin-addresses:}")
     private String adminAddresses;
 
-    @Value("${server.port:9280}")
+    @Value("${server.port:8088}")
     private int serverPort;
 
     @Value("${xxl.job.timeout:3}")

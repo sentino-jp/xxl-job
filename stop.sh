@@ -5,7 +5,7 @@
 # 功能: 停止由 start.sh 启动的调度中心进程（内嵌 HTTP 执行器随进程一起停）；不管数据库
 # 用法: ./stop.sh [--force] [--port=<port>]
 #   --force        跳过优雅停机，直接 kill -9
-#   --port=9280    指定实例端口（默认取 SERVER_PORT，再默认 9280）
+#   --port=8088    指定实例端口（默认取 SERVER_PORT，再默认 8088）
 #
 # 做法对齐 DragonFlow/stop.sh：三路收集候选 PID（pid 文件 / jar 名 / 端口占用者）→
 # 逐个校验归属（进程工作目录必须是本仓库）→ TERM 等待 → KILL → 终态校验，
@@ -268,7 +268,7 @@ main() {
     echo ""
 
     FORCE=false
-    SERVER_PORT="${SERVER_PORT:-9280}"
+    SERVER_PORT="${SERVER_PORT:-8088}"
     for arg in "$@"; do
         case $arg in
             --force|force)

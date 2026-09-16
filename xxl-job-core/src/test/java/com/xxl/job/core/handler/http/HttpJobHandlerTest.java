@@ -146,7 +146,7 @@ public class HttpJobHandlerTest {
         assertFalse(handler.isAllowed("https://changeeon.com/"));
         assertFalse(handler.isAllowed("http://10.0.1.34:9082/health"), "raw private IPs are no longer allowed");
         assertFalse(handler.isAllowed("http://169.254.169.254/opc/v2/instance/"), "cloud metadata endpoint");
-        assertFalse(handler.isAllowed("http://127.0.0.1:9280/"));
+        assertFalse(handler.isAllowed("http://127.0.0.1:8088/"));
         assertFalse(handler.isAllowed("https://example.com/"));
     }
 

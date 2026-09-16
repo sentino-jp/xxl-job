@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 |---|---|
-| 调度中心服务端口 | **9280**（`SERVER_PORT`，避开 8080/8081 等已占用端口） |
+| 调度中心服务端口 | **8088**（`SERVER_PORT`，避开 8080/8081 等已占用端口） |
 | 调度中心内网域名 | **http://xxl-job.internal.sentino.jp**，由 Internal Gateway（api-gateway/infra）反代到三台调度中心 |
 | 调度中心节点 | 与 coucou-server 同机：10.0.0.100 / 10.0.0.194 / 10.0.0.228（私网），系统用户 ubuntu，目录 /data/xxl-job-admin |
 | 内嵌 HTTP 执行器端口 | 9999（`XXL_JOB_EXECUTOR_PORT`，可改）。每台调度中心进程内嵌一个 http-executor 实例，三台节点即三个实例；`XXL_JOB_EXECUTOR_ENABLED=false` 可让某台只做调度 |
@@ -43,11 +43,11 @@ api-gateway 仓库分支 `infra/xxl-job-internal-gateway` 已包含全部改动�
    ```
 
    本仓库 `deploy/gateway/xxl-job.conf` 是同一份配置的副本，以 api-gateway 仓库为准。
-3. upstream 是三台节点 10.0.0.100 / 10.0.0.194 / 10.0.0.228 的 9280，与网关里 agent.conf 反代的是同一批机器。
+3. upstream 是三台节点 10.0.0.100 / 10.0.0.194 / 10.0.0.228 的 8088，与网关里 agent.conf 反代的是同一批机器。
 
    此时调度中心还没起来，curl 会返回 502，等第 4 步之后再验。
 
-4. 安全组：放通网关机到三台节点的 9280（网关到这三台的 8081 已放通，同一批机器再加一个端口）；放通业务执行器节点到网关机 80（已有）；放通三台调度中心节点之间的 9999（内嵌 HTTP 执行器端口，任一台调度都可能触发另一台上的执行器）；放通调度中心到各业务服务执行器端口。
+4. 安全组：放通网关机到三台节点的 8088（网关到这三台的 8081 已放通，同一批机器再加一个端口）；放通业务执行器节点到网关机 80（已有）；放通三台调度中心节点之间的 9999（内嵌 HTTP 执行器端口，任一台调度都可能触发另一台上的执行器）；放通调度中心到各业务服务执行器端口。
 
 ### 第 2 步：数据库
 
@@ -87,7 +87,7 @@ mvn -pl xxl-job-admin -am package -Dmaven.test.skip=true
 准备 `.env`：以 `xxl-job-admin/.env.example` 为模板，按环境填好。生产至少这些项：
 
 ```
-SERVER_PORT=9280
+SERVER_PORT=8088
 LOG_HOME=/data/xxl-job-admin/logs
 DB_URL=jdbc:postgresql://10.0.1.34:5432/xxl_job?sslmode=require
 DB_USER=xxl_job
@@ -119,7 +119,7 @@ sudo mv /tmp/xxl-job-admin.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now xxl-job-admin
 journalctl -u xxl-job-admin -f      # 看到 "Started XxlJobAdminApplication" 与 "lark alarm enabled" 即可
-curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:9280/auth/login   # 200
+curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8088/auth/login   # 200
 ```
 
 其余两台重复以上步骤。三台靠数据库锁互斥，同一时刻只有一台在调度，其余热备；节点时钟必须 NTP 同步（coucou-server 已在这三台跑 systemd，时钟与目录规范可直接沿用）。
@@ -147,7 +147,7 @@ HTTP 执行器随调度中心进程一起启动，第 4 步已经完成部署，
 - 节点上 `ss -ltnp | grep 9999` 能看到 java 进程监听。
 - 控制台"执行器管理"里 http-executor 组有三个在线地址（token 回填之前为空是正常的）。
 
-执行器向调度中心注册默认走本机回环 `http://127.0.0.1:9280`，不经网关，网关故障不影响注册。多网卡或容器环境要把 `XXL_JOB_EXECUTOR_ADDRESS` 设为其余调度中心节点可达的 `http://<私网IP>:9999/`。
+执行器向调度中心注册默认走本机回环 `http://127.0.0.1:8088`，不经网关，网关故障不影响注册。多网卡或容器环境要把 `XXL_JOB_EXECUTOR_ADDRESS` 设为其余调度中心节点可达的 `http://<私网IP>:9999/`。
 
 ### 第 7 步：业务服务接入（workflow-api 等）
 
@@ -201,4 +201,4 @@ ssh ubuntu@<node> 'cd /data/xxl-job-admin && mv xxl-job-admin.jar.bak xxl-job-ad
 - **日志**：调度日志按 `XXL_JOB_LOG_RETENTION_DAYS` 自动清理；调度中心文件日志在 `LOG_HOME/xxl-job/`，内嵌 HTTP 执行器的任务日志在 `XXL_JOB_EXECUTOR_LOGPATH`（默认 `LOG_HOME/xxl-job/jobhandler`），业务服务执行器的任务日志在各自服务里。
 - **备份**：xxl_job 库纳入托管 PG 备份；各节点 `.env` 单独备份，注意权限。
 - **监控**：`http://xxl-job.internal.sentino.jp/actuator/health`；失败任务数从 xxl_job_log 中 handle_code 非 200 的记录统计。
-- **网络路径**：业务服务执行器 → 网关 80 → 调度中心 9280；调度中心 → 其余调度中心节点 9999（内嵌 HTTP 执行器）与各业务执行器端口；调度中心 → PostgreSQL 5432；调度中心 → open.larksuite.com 443。
+- **网络路径**：业务服务执行器 → 网关 80 → 调度中心 8088；调度中心 → 其余调度中心节点 9999（内嵌 HTTP 执行器）与各业务执行器端口；调度中心 → PostgreSQL 5432；调度中心 → open.larksuite.com 443。
