@@ -124,6 +124,32 @@ public class HttpJobHandlerTest {
         assertTrue(new HttpJobHandler().isAllowed("http://anything/"), "empty allow list allows all");
     }
 
+    /** the exact production value from .env.example / application.properties default */
+    @Test
+    void production_allow_list_covers_three_company_domains_only() {
+        HttpJobHandler handler = new HttpJobHandler(List.of(".sentino.jp", ".coucou.fun", ".changeeon.com.cn"));
+
+        // apex + any sub-domain of each entry
+        assertTrue(handler.isAllowed("https://sentino.jp/"));
+        assertTrue(handler.isAllowed("https://api.sentino.jp/api/v1/x"));
+        assertTrue(handler.isAllowed("http://agent.internal.sentino.jp/health"));
+        assertTrue(handler.isAllowed("https://coucou.fun/"));
+        assertTrue(handler.isAllowed("https://api.coucou.fun/reconcile"));
+        assertTrue(handler.isAllowed("https://changeeon.com.cn/"));
+        assertTrue(handler.isAllowed("https://www.changeeon.com.cn/job"));
+        assertTrue(handler.isAllowed("HTTPS://API.SENTINO.JP/upper-case-host"));
+
+        // look-alikes and everything else are rejected
+        assertFalse(handler.isAllowed("https://evil-sentino.jp/"));
+        assertFalse(handler.isAllowed("https://sentino.jp.evil.com/"));
+        assertFalse(handler.isAllowed("https://coucou.fun.attacker.net/"));
+        assertFalse(handler.isAllowed("https://changeeon.com/"));
+        assertFalse(handler.isAllowed("http://10.0.1.34:9082/health"), "raw private IPs are no longer allowed");
+        assertFalse(handler.isAllowed("http://169.254.169.254/opc/v2/instance/"), "cloud metadata endpoint");
+        assertFalse(handler.isAllowed("http://127.0.0.1:9280/"));
+        assertFalse(handler.isAllowed("https://example.com/"));
+    }
+
     @Test
     void param_validation() {
         assertNull(HttpJobHandler.validParam("{\"url\":\"https://a.b/c\"}"));
