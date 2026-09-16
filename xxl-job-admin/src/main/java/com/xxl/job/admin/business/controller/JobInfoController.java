@@ -22,6 +22,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -46,9 +47,23 @@ public class JobInfoController {
 	private XxlJobGroupMapper xxlJobGroupMapper;
 	@Resource
 	private XxlJobService xxlJobService;
+
+	/** same property the embedded http-executor uses (XXL_JOB_HTTPJOB_ALLOWDOMAINS); shown as a hint on the job form */
+	@Value("${xxl.job.executor.httpjob.allowdomains:}")
+	private String httpJobAllowDomains;
+
+	private List<String> httpJobAllowDomainList() {
+		if (StringTool.isBlank(httpJobAllowDomains)) {
+			return List.of();
+		}
+		return java.util.Arrays.stream(httpJobAllowDomains.split(",")).map(String::trim).filter(StringTool::isNotBlank).toList();
+	}
 	
 	@RequestMapping
 	public String index(HttpServletRequest request, Model model, @RequestParam(value = "jobGroup", required = false, defaultValue = "-1") int jobGroup) {
+
+		// HTTP 调度允许请求的域名白名单（与内嵌 http-executor 同一份配置），页面上提示用户
+		model.addAttribute("HttpJobAllowDomains", httpJobAllowDomainList());
 
 		// 枚举-字典
 		model.addAttribute("ExecutorRouteStrategyEnum", ExecutorRouteStrategyEnum.values());	    // 路由策略-列表

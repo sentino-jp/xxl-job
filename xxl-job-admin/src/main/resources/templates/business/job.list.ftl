@@ -192,8 +192,24 @@
 
 							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
 								<div class="form-group">
+									<div class="col-sm-offset-2 col-sm-10">
+										<div class="callout <#if HttpJobAllowDomains?has_content>callout-info<#else>callout-danger</#if>" style="margin-bottom: 0; padding: 8px 12px;">
+											<i class="fa fa-shield"></i>
+											<#if HttpJobAllowDomains?has_content>
+												${I18n.jobinfo_http_allow_domain_hint}
+												<#list HttpJobAllowDomains as d><code>${d}</code><#sep> </#list>
+											<#else>
+												${I18n.jobinfo_http_allow_domain_empty}
+											</#if>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
 									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
-									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+									<div class="col-sm-10">
+										<input type="text" class="form-control http_url" name="http_url" placeholder="https://host/path" maxlength="1024" >
+										<span class="help-block text-red http_url_warn" style="display: none; margin-bottom: 0;"><i class="fa fa-exclamation-triangle"></i> ${I18n.jobinfo_http_url_untrusted}</span>
+									</div>
 								</div>
 								<div class="form-group">
 									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
@@ -378,8 +394,24 @@
 
 							<div class="invoke_conf invoke_conf_HTTP" style="display: none" >
 								<div class="form-group">
+									<div class="col-sm-offset-2 col-sm-10">
+										<div class="callout <#if HttpJobAllowDomains?has_content>callout-info<#else>callout-danger</#if>" style="margin-bottom: 0; padding: 8px 12px;">
+											<i class="fa fa-shield"></i>
+											<#if HttpJobAllowDomains?has_content>
+												${I18n.jobinfo_http_allow_domain_hint}
+												<#list HttpJobAllowDomains as d><code>${d}</code><#sep> </#list>
+											<#else>
+												${I18n.jobinfo_http_allow_domain_empty}
+											</#if>
+										</div>
+									</div>
+								</div>
+								<div class="form-group">
 									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_url}<font color="red">*</font></label>
-									<div class="col-sm-10"><input type="text" class="form-control" name="http_url" placeholder="https://host/path" maxlength="1024" ></div>
+									<div class="col-sm-10">
+										<input type="text" class="form-control http_url" name="http_url" placeholder="https://host/path" maxlength="1024" >
+										<span class="help-block text-red http_url_warn" style="display: none; margin-bottom: 0;"><i class="fa fa-exclamation-triangle"></i> ${I18n.jobinfo_http_url_untrusted}</span>
+									</div>
 								</div>
 								<div class="form-group">
 									<label for="firstname" class="col-sm-2 control-label">${I18n.jobinfo_http_method}</label>
@@ -1062,6 +1094,36 @@
 		// ---------------------- invoke type (BEAN / HTTP) ----------------------
 		var HTTP_JOB_HANDLER = 'httpJobHandler';
 
+		// allow-domain rules of the http-executor (same syntax as HttpJobHandler.isAllowed: host, host:port, .suffix, url prefix)
+		var HTTP_ALLOW_DOMAINS = [<#list HttpJobAllowDomains as d>'${d?js_string}'<#sep>, </#list>];
+
+		function isTrustedHttpUrl(url) {
+			if (!HTTP_ALLOW_DOMAINS.length) { return true; }
+			if (!url || url.indexOf('${r"${"}') >= 0) { return true; }   // placeholder urls are resolved on the executor
+			var m = /^[a-z][a-z0-9+.-]*:\/\/([^\/?#]+)/i.exec(url.trim());
+			if (!m) { return false; }
+			var hostPort = m[1].toLowerCase().replace(/^[^@]*@/, '');
+			var host = hostPort.replace(/:\d+$/, '');
+			var lower = url.trim().toLowerCase();
+			for (var i = 0; i < HTTP_ALLOW_DOMAINS.length; i++) {
+				var rule = HTTP_ALLOW_DOMAINS[i].toLowerCase();
+				if (rule.indexOf('://') >= 0) {
+					if (lower.indexOf(rule) === 0) { return true; }
+				} else if (rule.charAt(0) === '.') {
+					if (host === rule.substring(1) || host.substring(host.length - rule.length) === rule) { return true; }
+				} else if (host === rule || hostPort === rule) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// live hint under the URL field: red warning when the host is outside the allow list
+		$(document).on('input change', "input[name='http_url']", function () {
+			var $input = $(this);
+			$input.closest('.form-group').find('.http_url_warn').toggle(!isTrustedHttpUrl($input.val()));
+		});
+
 		function parseHttpParam(param) {
 			if (!param) { return null; }
 			try { var p = JSON.parse(param); return (p && typeof p === 'object') ? p : null; } catch (e) { return null; }
@@ -1108,6 +1170,7 @@
 			var isHttp = row && row.executorHandler == HTTP_JOB_HANDLER;
 			$form.find("select[name='invokeType']").val(isHttp ? 'HTTP' : 'BEAN');
 			if (isHttp) { fillHttpForm($form, row.executorParam); } else { fillHttpForm($form, null); }
+			$form.find("input[name='http_url']").trigger('change');
 			$form.find("select[name='invokeType']").change();
 		}
 
