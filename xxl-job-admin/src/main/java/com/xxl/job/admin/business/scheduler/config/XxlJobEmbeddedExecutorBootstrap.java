@@ -81,6 +81,16 @@ public class XxlJobEmbeddedExecutorBootstrap {
         if (executor != null) {
             return;
         }
+        // First rollout: the executor group (and its AccessToken) does not exist yet, so the token is
+        // intentionally left empty. XxlJobExecutor.start() would throw on a blank token and take the
+        // whole scheduler down with it; skip the embedded executor instead so scheduling keeps working.
+        // HTTP jobs simply have no executor until the token is filled in and the node is restarted.
+        if (StringTool.isBlank(accessToken)) {
+            logger.warn(">>>>>>>>>>> xxl-job embedded http executor NOT started: accessToken empty. "
+                    + "Create the '{}' executor group in the console, put its AccessToken into XXL_JOB_EXECUTOR_ACCESS_TOKEN and restart this node.",
+                    appname);
+            return;
+        }
 
         String addresses = StringTool.isNotBlank(adminAddresses)
                 ? adminAddresses
