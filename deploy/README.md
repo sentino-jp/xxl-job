@@ -16,6 +16,7 @@
 deploy/systemd/xxl-job-admin.service            调度中心 systemd 单元
 deploy/gateway/xxl-job.conf                      Internal Gateway 的 nginx 反代配置（复制到 api-gateway/infra）
 xxl-job-admin/.env.example                       调度中心 .env 模板
+init-db.sh                                       数据库初始化脚本：建账号/建库/全量建表/补增量迁移，可重复执行
 doc/db/tables_xxl_job.sql                        全量建表脚本（新库）
 doc/db/migration/                                增量迁移脚本（已有库）
 ```
@@ -50,7 +51,14 @@ api-gateway 仓库分支 `infra/xxl-job-internal-gateway` 已包含全部改动�
 
 ### 第 2 步：数据库
 
-在托管 PostgreSQL（10.0.1.34）上建独立库与账号。密码用 `xxl-job-admin/.env` 里 `DB_PASSWORD` 的值，两边必须一致。
+在托管 PostgreSQL（10.0.1.34）上建独立库与账号。用仓库根目录的 `init-db.sh`，它按 `xxl-job-admin/.env` 里的 `DB_URL / DB_USER / DB_PASSWORD` 建账号（密码即 `DB_PASSWORD`）、建库、跑全量建表脚本并标记迁移记录；可重复执行，已初始化的库只补增量迁移。
+
+```bash
+# 在能连到 10.0.1.34 的跳板机或调度中心节点上执行；PGADMIN_PASSWORD 是 postgres 超级用户密码
+PGADMIN_PASSWORD='<postgres 密码>' ./init-db.sh --env=xxl-job-admin/.env --admin-user=postgres
+```
+
+不想用脚本时手工等价步骤：
 
 ```bash
 psql -h 10.0.1.34 -U postgres -c "CREATE ROLE xxl_job LOGIN PASSWORD '<.env 里的 DB_PASSWORD>';"
@@ -160,7 +168,7 @@ HTTP 执行器随调度中心进程一起启动，第 4 步已经完成部署，
 | 已用本分支早期 PostgreSQL 建表脚本初始化，缺 `schedule_timezone` 或仍有 `glue_*` 列 | 执行 `doc/db/migration/001_schedule_timezone_and_drop_glue.sql`，幂等，可重复执行 |
 | 老的 MySQL 版 xxl-job | 没有 ALTER 路径。用 `tables_xxl_job.sql` 建 PostgreSQL 新库，在控制台重新录入执行器组与任务，历史日志不迁移 |
 
-迁移脚本执行方式与规则见 `doc/db/migration/README.md`。执行顺序：先跑迁移，再滚动重启调度中心到新版本（本分支的结构变更都是加列或删无用列，旧版本读新结构不报错，因此先迁移后发版是安全的）。
+迁移脚本执行方式与规则见 `doc/db/migration/README.md`；也可以直接 `PGADMIN_PASSWORD=... ./init-db.sh --env=xxl-job-admin/.env --migrate-only`，脚本按 `xxl_job_schema_migration` 表跳过已执行过的。执行顺序：先跑迁移，再滚动重启调度中心到新版本（本分支的结构变更都是加列或删无用列，旧版本读新结构不报错，因此先迁移后发版是安全的）。
 
 ## 三、版本升级
 
