@@ -15,7 +15,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 ADD target/xxl-job-admin-*.jar /app.jar
 
 # expose port
-EXPOSE 9280
+EXPOSE 9280 9999
 
 # command
 # log home: -e LOG_HOME=/data/applogs

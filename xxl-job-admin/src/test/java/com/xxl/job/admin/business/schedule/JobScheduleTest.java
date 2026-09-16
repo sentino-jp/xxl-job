@@ -12,7 +12,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
-@SpringBootTest
+@SpringBootTest(properties = "xxl.job.executor.enabled=false")
 public class JobScheduleTest {
     private static Logger logger = LoggerFactory.getLogger(JobScheduleTest.class);
 

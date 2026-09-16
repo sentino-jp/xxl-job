@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  *
  * @author xuxueli 2017-12-22 17:16:23
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "xxl.job.executor.enabled=false")
 public class I18nUtilTest {
     private static Logger logger = LoggerFactory.getLogger(I18nUtilTest.class);
 

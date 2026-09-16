@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.Date;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "xxl.job.executor.enabled=false")
 public class XxlJobLogReportMapperTest {
     private static final Logger logger = LoggerFactory.getLogger(XxlJobLogMapperTest.class);
 

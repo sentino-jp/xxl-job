@@ -17,7 +17,7 @@ python3 hello_service.py 0.0.0.0 8399   # 指定地址与端口
 
 ## 在调度中心配置任务
 
-前提：有一个执行器在线且其 `httpjob.allowdomains` 允许本服务的地址（为空表示全部允许），例如仓库里的 `xxl-job-executor-http`。
+前提：有一个执行器在线且其 `httpjob.allowdomains` 允许本服务的地址（为空表示全部允许），例如调度中心内嵌的通用 HTTP 执行器（http-executor 组，随 xxl-job-admin 一起启动）。
 
 | 字段 | 值 |
 |---|---|
