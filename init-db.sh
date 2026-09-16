@@ -74,11 +74,13 @@ parse_db_url() {
 }
 
 # psql 快捷方式：以管理员连 postgres 库 / 以应用账号连业务库
+# -w：绝不交互式询问密码。否则密码缺失时 psql 会弹 "Password for user xxx:"，
+# 输进去的内容对脚本内部的连接检查无效，只会让人误以为密码错了。
 psql_admin() {
-    PGPASSWORD="${PGADMIN_PASSWORD:-}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -d postgres -v ON_ERROR_STOP=1 -X -q "$@"
+    PGPASSWORD="${PGADMIN_PASSWORD:-}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$ADMIN_USER" -d postgres -w -v ON_ERROR_STOP=1 -X -q "$@"
 }
 psql_app() {
-    PGPASSWORD="${DB_PASSWORD:-}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -v ON_ERROR_STOP=1 -X -q "$@"
+    PGPASSWORD="${DB_PASSWORD:-}" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -w -v ON_ERROR_STOP=1 -X -q "$@"
 }
 table_exists() {
     psql_app -tAc "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='$1'" | grep -q 1
@@ -147,6 +149,12 @@ step_check_connection() {
         exit 1
     fi
     if [ "$MIGRATE_ONLY" = false ]; then
+        # 连远端库、管理员又不是当前 OS 用户，几乎不可能免密；缺密码就直接说清楚，不去撞一次连接
+        if [ -z "${PGADMIN_PASSWORD:-}" ] && [ "$DB_HOST" != "127.0.0.1" ] && [ "$DB_HOST" != "localhost" ]; then
+            log_error "远端库 ${DB_HOST} 的管理员 ${ADMIN_USER} 需要密码，但 PGADMIN_PASSWORD 为空"
+            log_error "用法: PGADMIN_PASSWORD='<管理员密码>' ./init-db.sh --env=... --admin-user=${ADMIN_USER}"
+            exit 1
+        fi
         if ! psql_admin -tAc "SELECT 1" > /dev/null 2>&1; then
             log_error "无法以管理员 ${ADMIN_USER} 连接 ${DB_HOST}:${DB_PORT}/postgres（密码请用 PGADMIN_PASSWORD 传入，或 --admin-user 指定其他超级用户）"
             exit 1
