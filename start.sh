@@ -165,7 +165,7 @@ step_load_env() {
     fi
 
     # 内置默认值：env 文件未给的项按本机联调习惯补齐
-    export SERVER_PORT="${SERVER_PORT:-9280}"
+    export SERVER_PORT="${SERVER_PORT:-8088}"
     export DB_URL="${DB_URL:-jdbc:postgresql://127.0.0.1:5432/xxl_job}"
     export DB_USER="${DB_USER:-$(whoami)}"          # Homebrew PostgreSQL 同名 OS 用户免密
     export DB_PASSWORD="${DB_PASSWORD-}"
