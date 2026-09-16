@@ -8,15 +8,16 @@
 #   3. 执行 doc/db/migration/NNN_*.sql 中尚未执行过的增量迁移（按 xxl_job_schema_migration 表去重）
 # 用法: ./init-db.sh [--env=<file>] [--profile=<name>] [--admin-user=<superuser>] [--drop] [--yes] [--migrate-only]
 #   --env=<file>          从 env 文件读取 DB_URL / DB_USER / DB_PASSWORD（与 start.sh 相同格式）
-#   --profile=<name>      等价于 --env=xxl-job-admin/.env.<name>；非 local 且文件不存在时回落 xxl-job-admin/.env
+#   --profile=<name>      等价于 --env=xxl-job-admin/.env.<name>，文件不存在即报错
+#   不带以上两项时默认加载 xxl-job-admin/.env（等价于 --env=xxl-job-admin/.env）
 #   --admin-user=<name>   建账号/建库所用的超级用户。默认：应用账号是当前 OS 用户则用它自己，否则用 postgres
 #                         管理员密码通过环境变量 PGADMIN_PASSWORD 传入（本机免密可不传）
 #   --drop                先删掉已存在的库再重建（丢数据！需交互确认或 --yes）
 #   --yes                 跳过 --drop 的交互确认
 #   --migrate-only        不建账号建库、不跑全量脚本，只补增量迁移（给已有库升级用）
 #
-# 本机默认（无 env 文件时）：127.0.0.1:5432/xxl_job，应用账号 = 当前 OS 用户（Homebrew PostgreSQL 免密）
-# 生产：./init-db.sh --env=xxl-job-admin/.env --admin-user=sentinopg （PGADMIN_PASSWORD=... 前置；OCI 托管 PG 管理员是 sentinopg，非 postgres）
+# 连 .env 都没有时用内置本机默认值：127.0.0.1:5432/xxl_job，应用账号 = 当前 OS 用户（Homebrew PostgreSQL 免密）
+# 生产：./init-db.sh --admin-user=sentinopg （PGADMIN_PASSWORD=... 前置；OCI 托管 PG 管理员是 sentinopg，非 postgres）
 # 注意: 数据库服务本身不由本脚本启动，本机请先 `brew services start postgresql@14`
 # ============================================
 
@@ -47,6 +48,7 @@ MIGRATION_TABLE="xxl_job_schema_migration"
 MARKER_TABLE="xxl_job_info"          # 存在即视为已初始化
 
 # 参数
+PROFILE_SET=false; [ -n "${PROFILE:-}" ] && PROFILE_SET=true
 PROFILE="${PROFILE:-local}"
 ENV_FILE=""
 ADMIN_USER=""
@@ -96,11 +98,13 @@ step_load_env() {
     if [ -n "$ENV_FILE" ]; then
         candidate="$ENV_FILE"
         [ -f "$candidate" ] || { log_error "指定的 env 文件不存在: $candidate"; exit 1; }
-    elif [ -f "${ADMIN_MODULE}/.env.${PROFILE}" ]; then
+    elif [ "$PROFILE_SET" = true ]; then
+        # 显式指定了 --profile=<name>（或 PROFILE 环境变量）：只认 .env.<name>，不回落
         candidate="${ADMIN_MODULE}/.env.${PROFILE}"
-    elif [ "$PROFILE" != "local" ] && [ -f "${ADMIN_MODULE}/.env" ]; then
+        [ -f "$candidate" ] || { log_error "profile=$PROFILE 但找不到 $candidate"; exit 1; }
+    elif [ -f "${ADMIN_MODULE}/.env" ]; then
+        # 默认：等价于 --env=xxl-job-admin/.env
         candidate="${ADMIN_MODULE}/.env"
-        log_warning "未找到 ${ADMIN_MODULE}/.env.${PROFILE}，回落到 ${ADMIN_MODULE}/.env（该文件通常是生产配置）"
     fi
 
     if [ -n "$candidate" ]; then
@@ -110,11 +114,8 @@ step_load_env() {
         # shellcheck disable=SC1090
         eval "$(grep -E '^(DB_URL|DB_USER|DB_PASSWORD)=' "$candidate" || true)"
         set +a
-    elif [ "$PROFILE" = "local" ]; then
-        log_info "未找到 ${ADMIN_MODULE}/.env.local，使用内置本机默认值（不会加载 ${ADMIN_MODULE}/.env）"
     else
-        log_error "profile=$PROFILE 但找不到任何 env 文件（${ADMIN_MODULE}/.env.${PROFILE} 或 ${ADMIN_MODULE}/.env）"
-        exit 1
+        log_info "未找到 ${ADMIN_MODULE}/.env，使用内置本机默认值（本机 PostgreSQL 5432 / 当前 OS 用户免密）"
     fi
 
     DB_URL="${DB_URL:-jdbc:postgresql://127.0.0.1:5432/xxl_job}"
@@ -333,7 +334,7 @@ main() {
     for arg in "$@"; do
         case $arg in
             --env=*)        ENV_FILE="${arg#*=}" ;;
-            --profile=*)    PROFILE="${arg#*=}" ;;
+            --profile=*)    PROFILE="${arg#*=}"; PROFILE_SET=true ;;
             --admin-user=*) ADMIN_USER="${arg#*=}" ;;
             --drop)         DROP=true ;;
             --yes|-y)       YES=true ;;
