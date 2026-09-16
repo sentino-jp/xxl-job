@@ -54,15 +54,18 @@ api-gateway 仓库分支 `infra/xxl-job-internal-gateway` 已包含全部改动�
 在托管 PostgreSQL（10.0.1.34）上建独立库与账号。用仓库根目录的 `init-db.sh`，它按 `xxl-job-admin/.env` 里的 `DB_URL / DB_USER / DB_PASSWORD` 建账号（密码即 `DB_PASSWORD`）、建库、跑全量建表脚本并标记迁移记录；可重复执行，已初始化的库只补增量迁移。
 
 ```bash
-# 在能连到 10.0.1.34 的跳板机或调度中心节点上执行；PGADMIN_PASSWORD 是 postgres 超级用户密码
-PGADMIN_PASSWORD='<postgres 密码>' ./init-db.sh --env=xxl-job-admin/.env --admin-user=postgres
+# 在能连到 10.0.1.34 的调度中心节点上执行。托管 PG 的管理员账号是 sentinopg（不是 postgres，且非 superuser），
+# 密码与 DragonFlow workflow-api/src/main/resources/application-cloud.properties 里的 DB_PASSWORD 相同（节点上 /data/DragonFlow/ 下有）。
+PGADMIN_PASSWORD="$(grep -E '^DB_PASSWORD=' /data/DragonFlow/workflow-api/src/main/resources/application-cloud.properties | head -1 | cut -d= -f2-)" \
+  ./init-db.sh --env=xxl-job-admin/.env --admin-user=sentinopg
 ```
 
 不想用脚本时手工等价步骤：
 
 ```bash
-psql -h 10.0.1.34 -U postgres -c "CREATE ROLE xxl_job LOGIN PASSWORD '<.env 里的 DB_PASSWORD>';"
-psql -h 10.0.1.34 -U postgres -c "CREATE DATABASE xxl_job OWNER xxl_job ENCODING 'UTF8';"
+psql -h 10.0.1.34 -U sentinopg -d postgres -c "CREATE ROLE xxl_job LOGIN PASSWORD '<.env 里的 DB_PASSWORD>';"
+psql -h 10.0.1.34 -U sentinopg -d postgres -c "GRANT xxl_job TO CURRENT_USER;"   # 管理员非 superuser，建 OWNER 库前必须先成为成员
+psql -h 10.0.1.34 -U sentinopg -d postgres -c "CREATE DATABASE xxl_job OWNER xxl_job ENCODING 'UTF8';"
 psql -h 10.0.1.34 -U xxl_job -d xxl_job -v ON_ERROR_STOP=1 -f doc/db/tables_xxl_job.sql
 ```
 

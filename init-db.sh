@@ -16,7 +16,7 @@
 #   --migrate-only        不建账号建库、不跑全量脚本，只补增量迁移（给已有库升级用）
 #
 # 本机默认（无 env 文件时）：127.0.0.1:5432/xxl_job，应用账号 = 当前 OS 用户（Homebrew PostgreSQL 免密）
-# 生产：./init-db.sh --env=xxl-job-admin/.env --admin-user=postgres   （PGADMIN_PASSWORD=... 前置）
+# 生产：./init-db.sh --env=xxl-job-admin/.env --admin-user=sentinopg （PGADMIN_PASSWORD=... 前置；OCI 托管 PG 管理员是 sentinopg，非 postgres）
 # 注意: 数据库服务本身不由本脚本启动，本机请先 `brew services start postgresql@14`
 # ============================================
 
@@ -206,6 +206,11 @@ step_role_and_database() {
     if [ "$exists" = "1" ]; then
         log_success "数据库 ${DB_NAME} 已存在"
     else
+        # 托管 PG（如 OCI 的 sentinopg）管理员不是 superuser：建 OWNER 为其他角色的库前，
+        # 管理员必须先成为该角色成员（PG16 起 CREATE DATABASE OWNER 要求）。本机 superuser 跑这句无害。
+        if [ "$DB_USER" != "$ADMIN_USER" ]; then
+            psql_admin -c "GRANT \"${DB_USER}\" TO CURRENT_USER" > /dev/null
+        fi
         psql_admin -c "CREATE DATABASE \"${DB_NAME}\" OWNER \"${DB_USER}\" ENCODING 'UTF8'"
         log_success "已创建数据库 ${DB_NAME}（OWNER ${DB_USER}）"
     fi
