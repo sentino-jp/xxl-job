@@ -16,7 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import java.util.Date;
 import java.util.List;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = "xxl.job.executor.enabled=false")
 public class XxlJobInfoMapperTest {
 	private static Logger logger = LoggerFactory.getLogger(XxlJobInfoMapperTest.class);
 	
