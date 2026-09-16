@@ -103,7 +103,7 @@ XXL_JOB_EXECUTOR_PORT=9999
 XXL_JOB_HTTPJOB_ALLOWDOMAINS=.sentino.jp,api.coucou.fun,10.0.1.34:9082
 ```
 
-`XXL_JOB_HTTPJOB_ALLOWDOMAINS` 生产必填，否则内嵌执行器可以请求任意地址。`XXL_JOB_EXECUTOR_ACCESS_TOKEN` 首次上线时执行器组还没建，先留空启动（此时执行器注册会被拒绝，只影响 HTTP 任务，不影响调度），第 5 步生成 token 后回填并滚动重启。
+`XXL_JOB_HTTPJOB_ALLOWDOMAINS` 生产必填，否则内嵌执行器可以请求任意地址。`XXL_JOB_EXECUTOR_ACCESS_TOKEN` 首次上线时执行器组还没建，先留空启动：此时内嵌执行器**不启动**，日志有一条 `embedded http executor NOT started: accessToken empty` 的 WARN，只影响 HTTP 任务，不影响调度；第 5 步生成 token 后回填并滚动重启，执行器随之启动。
 
 三台节点的 `.env` 内容完全相同。然后：
 
