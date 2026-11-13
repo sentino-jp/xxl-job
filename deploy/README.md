@@ -5,9 +5,9 @@
 | 项目 | 值 |
 |---|---|
 | 调度中心服务端口 | **8088**（`SERVER_PORT`，避开 8080/8081 等已占用端口） |
-| 调度中心内网域名 | **http://xxl-job.internal.sentino.jp**，由 Internal Gateway（api-gateway/infra）反代到三台调度中心 |
-| 调度中心节点 | 与 coucou-server 同机：10.0.0.100 / 10.0.0.194（私网），系统用户 ubuntu，目录 /data/xxl-job-admin |
-| 内嵌 HTTP 执行器端口 | 9999（`XXL_JOB_EXECUTOR_PORT`，可改）。每台调度中心进程内嵌一个 http-executor 实例，三台节点即三个实例；`XXL_JOB_EXECUTOR_ENABLED=false` 可让某台只做调度 |
+| 调度中心内网域名 | **http://xxl-job.internal.sentino.jp**，由 Internal Gateway（api-gateway/infra）反代到调度中心节点（目前单节点） |
+| 调度中心节点 | 与 coucou-server 同机：10.0.0.100（cluster-01，私网；agent-prod 2026-11 起只剩这一台），系统用户 ubuntu，目录 /data/xxl-job-admin |
+| 内嵌 HTTP 执行器端口 | 9999（`XXL_JOB_EXECUTOR_PORT`，可改）。每台调度中心进程内嵌一个 http-executor 实例，目前单节点即一个实例；`XXL_JOB_EXECUTOR_ENABLED=false` 可让某台只做调度 |
 | 数据库 | PostgreSQL，独立库 `xxl_job`、独立账号 `xxl_job` |
 
 仓库内相关文件：
@@ -43,7 +43,7 @@ api-gateway 仓库分支 `infra/xxl-job-internal-gateway` 已包含全部改动�
    ```
 
    本仓库 `deploy/gateway/xxl-job.conf` 是同一份配置的副本，以 api-gateway 仓库为准。
-3. upstream 是两台节点 10.0.0.100 / 10.0.0.194 的 8088，与网关里 agent.conf 反代的是同一批机器。
+3. upstream 只有一台节点 10.0.0.100（cluster-01）的 8088，与网关里 agent.conf 反代的是同一台机器。
 
    此时调度中心还没起来，curl 会返回 502，等第 4 步之后再验。
 
